@@ -630,13 +630,16 @@ def get_course_info_from_overview(course_key: str) -> Union[dict, None]:
     course_overview = CourseOverview.get_from_id(course_key)
     if course_overview is None:
         return None
+    def process_date(value):
+        if value is None:
+            return None
+        return value.date().isoformat()
     course_info_from_overview = {
         "sessionid": str(course_overview.id),
         "title": course_overview.display_name,
-        "started_at": course_overview.start.date().isoformat(),
-        "finished_at": course_overview.end.date().isoformat(),
-        "enrollment_finished_at":
-            course_overview.enrollment_end.date().isoformat(),
+        "started_at": process_date(course_overview.start),
+        "finished_at": process_date(course_overview.end),
+        "enrollment_finished_at": process_date(course_overview.enrollment_end),
         "image": LMS_URL + course_overview.course_image_url,
         "external_url": f"{LMS_URL}/courses/{str(course_overview.id)}/about",
         "hours_per_week": course_overview.effort,
