@@ -1,0 +1,32 @@
+{% extends "scos/base.html" %}
+
+{% block content %}
+<div class="v-container">
+    <h2>{{ scos_platform.title }}</h2>
+</div>
+
+<div class="h-container">
+    <a class="button" href="{% url 'scos:scos' %}">Панель СЦОС</a>
+    <a class="button" href="{% url 'scos:course_add' %}">Добавить курс</a>
+</div>
+
+<div class="v-container">
+    <p>Всего курсов: {{ scos_courses.total_count }}</p>
+    <table class="courses">
+        <tr>
+            <th>Название онлайн-курса</th>
+            <th>Дата ближайшего запуска</th>
+            <th>Правообладатель</th>
+            <th>institution_id</th>
+        </tr>
+    {% for course in scos_courses.results %}
+        <tr class="courses" onclick="window.location='{% url 'scos:course' global_id=course.global_id %}';">
+            <td>{{ course.title }}</td>
+            <td>{{ course.started_at }}</td>
+            <td>{{ course.institution_short_title }}</td>
+            <td>{{ course.institution_id }}</td>
+        </tr>
+    {% endfor %}
+    </table>
+</div>
+{% endblock content %}

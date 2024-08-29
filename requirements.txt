@@ -1,0 +1,9 @@
+Django==4.2.11
+pylint>=3.2.2
+pylint-django>=2.5.5
+requests==2.31.0
+social-auth-app-django==5.4.2
+social-auth-core>=4.5.4
+celery==5.4.0
+tutor==17.0.5
+edx-opaque-keys==2.10.0

@@ -1,0 +1,41 @@
+{% extends "scos/base.html" %}
+
+{% block content %}
+    <div class="v-container">
+        <h2>Обновление курса на СЦОС</h2>
+    </div>
+    <div class="h-container">
+        <a class="button" href="{% url 'scos:scos' %}">Панель СЦОС</a>
+        <a class="button" href="{% url 'scos:course_all' %}">К выбору курса</a>
+        <a class="button" href="{% url 'scos:course' global_id=global_id %}">К параметрам курса</a>
+    </div>
+
+    {% if course_json %}
+    {% csrf_token %}
+    <script>
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const courseUpdateSendUrl = "{% url 'scos:course_send' global_id=global_id %}";
+        let courseJSON = {{ course_json | safe }};
+    </script>
+
+    <div class="v-container">
+        <details>
+            <summary class="button">Course JSON</summary>
+            <p class="json-code" id="print_course_json">{{ course_json }}</p>
+        </details>
+    </div>
+
+    <form id="course_info_form">
+    <div class="v-container">
+        {% include "scos/course/components/course_modify_table.html" %}
+    </div>
+
+    <div class="v-container">
+        <input class="button" id="send_course_info" type="submit" value="Обновить">
+    </div>
+    </form>
+    {% load static %}
+    <script src="{% static 'scos/js/course/update.js' %}"></script>
+    {% endif %}
+
+{% endblock content %}

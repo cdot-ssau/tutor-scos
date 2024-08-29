@@ -1,0 +1,16 @@
+<td style="width: 240px; padding-right: 0px; border-right: none;">
+    <label for="course_{{ attr.name }}">
+        <p>{{ attr.description }}</p>
+        <p><small>"{{ attr.name }}"</small></p>
+    </label><br />
+</td>
+<td style="width: 60px; border-left: none;">
+    <div class="mark">
+        {% if attr.required %}
+        <p class="tooltip">*<span class="tooltiptext">Обязательно</span></p>
+        {% endif %}
+        {% if attr.moderated %}
+        <p class="tooltip">!<span class="tooltiptext">Требует повторной экспертизы</span></p>
+        {% endif %}
+    </div>
+</td>

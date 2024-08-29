@@ -1,0 +1,17 @@
+# VIM swap files
+*~
+*.swp
+*.swo
+
+# Python
+__pycache__
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+venv/
+venvs/
+
+# VSCode settings
+.vscode/

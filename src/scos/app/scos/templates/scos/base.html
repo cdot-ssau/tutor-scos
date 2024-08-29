@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'scos/css/scos.css' %}">
+    <script src="{% static 'scos/js/scos.js' %}"></script>
+    {% block head %}{% endblock head %}
+</head>
+
+<header class="scos-status">
+    <div style=" width: 400px;">
+        <p style="display: inline-block;">Статус проверки соединения со СЦОС: </p>
+        {% if scos_connection_check == "200" %}
+            <p style="display: inline-block; color: LightGreen; font-weight: bold;">Успешно</p>
+        {% else %}
+            <p style="display: inline-block; color: LightCoral; font-weight: bold;">Ошибка</p>
+        {% endif %}
+    </div>
+    <div style="width: 400px; margin-left: auto;">
+        <table>
+            <tr>
+                <td>SCOS base url:</td><td>{{ scos_base_url }}</td>
+            </tr>
+            <tr>
+                <td>SCOS partner_id:</td><td>{{ scos_partner_id }}</td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+<body>
+{% block content %}{% endblock content %}
+</body>

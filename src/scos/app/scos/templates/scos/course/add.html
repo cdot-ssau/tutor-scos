@@ -1,0 +1,54 @@
+{% extends "scos/base.html" %}
+
+{% block content %}
+    <div class="v-container">
+        <h2>Размещение курса на СЦОС</h2>
+        <p> {{ not_required }} </p>
+    </div>
+
+    <div class="h-container">
+        <a class="button" href="{% url 'scos:scos' %}">Панель СЦОС</a>
+        <a class="button" href="{% url 'scos:course_all' %}">К выбору курса</a>
+    </div>
+
+    <form action="{% url 'scos:course_add' %}">
+        <div class="v-container">
+            <label for="course_url">Ссылка на олайн-курс на сайте Платформы:</label>
+        </div>
+        <div class="v-container">
+            <textarea id="course_url" name="course_url" style="width: 600px; font-size: 1.25em; resize: none;" class="expandable" required>{{ course_url }}</textarea>
+        </div>
+        <div class="v-container">
+            <input class="button" type="submit" value="Проверить" />
+        </div>
+    </form>
+
+    {% if course_json %}
+    {% csrf_token %}
+    <script>
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const courseAddSendUrl = "{% url 'scos:course_send' %}";
+        let courseJSON = {{ course_json | safe }};
+    </script>
+
+    <div class="v-container">
+        <details>
+            <summary class="button">Course JSON</summary>
+            <p class="json-code" id="print_course_json">{{ course_json }}</p>
+        </details>
+    </div>
+
+    <form id="course_info_form">
+    <div class="v-container">
+        {% include "scos/course/components/course_modify_table.html" %}
+    </div>
+
+    <div class="v-container">
+        <input class="button" id="send_course_info" type="submit" value="Отправить">
+    </div>
+    </form>
+    {% load static %}
+    <script src="{% static 'scos/js/course/add.js' %}"></script>
+    {% endif %}
+
+{% endblock content %}

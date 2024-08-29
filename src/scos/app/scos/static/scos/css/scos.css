@@ -1,0 +1,182 @@
+body {
+    margin: 0px;
+}
+
+header.scos-status {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0px;
+    padding: 0px;
+    border-bottom: 2px solid Black;
+    box-shadow: 4px 4px 4px LightGrey;
+}
+
+header.scos-status div {
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 0.8em;
+    display: block;
+}
+
+div.h-container {
+    display: flex;
+    flex-direction: row;
+    margin: 20px;
+    padding: 0px;
+}
+
+div.v-container {
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+    padding: 0px;
+}
+
+table.courses {
+    border: 2px solid Black;
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 1500px;
+    box-shadow: 4px 4px 4px LightGrey;
+}
+
+table.courses td {
+    border: 1px solid;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+table.courses th {
+    border-top: 2px solid;
+    border-bottom: 2px solid;
+    border-left: 1px solid;
+    border-right: 1px solid;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+table.courses tr.courses:hover {
+    background-color: LightCyan;
+    cursor: pointer;
+}
+
+table.courses textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 1.25em;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.button {
+    display: flex;
+    background-color: White;
+    font-size: 1em;
+    text-decoration: none;
+    color: Black;
+    padding: 0px;
+    margin-left: 0px;
+    margin-right: 10px;
+    margin-top: 0px;
+    margin-bottom: 10px;
+    border: 2px solid Black;
+    box-shadow: 4px 4px 4px LightGrey;
+    transition-duration: 0.1s;
+    box-sizing: border-box;
+    width: 150px;
+    height: 50px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.button:active {
+    margin-top: 2px;
+    margin-bottom: 8px;
+    margin-left: 2px;
+    margin-right: 8px;
+    box-shadow: 2px 2px 2px LightGrey;
+}
+
+p.json-code {
+    max-width: 1000px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    color: DeepSkyBlue;
+    border: 2px solid Black;
+
+}
+
+p.json-code span.keys {
+    color: DeepPink;
+}
+
+p.json-code span.brackets {
+    color: DarkViolet;
+}
+
+div.mark {
+    display: flex;
+}
+
+div.mark > p {
+    width: 25px;
+    height: 25px;
+    box-sizing: border-box;
+    margin: 2px;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+    color: White;
+    background-color: Grey;
+    cursor: default;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+  }
+  
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 160px;
+    background-color: DimGrey;
+    color: White;
+    font-size: 0.8em;
+    word-break: keep-all;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -80px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+  
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: DimGrey transparent transparent transparent;
+}
+  
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
