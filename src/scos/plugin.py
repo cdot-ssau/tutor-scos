@@ -5,6 +5,7 @@ import os.path
 import shutil
 from glob import glob
 from typing import Union
+from importlib.metadata import entry_points
 
 import appdirs
 import pkg_resources
@@ -53,7 +54,7 @@ def add_scos_config_mod_to_environ(plugin: str) -> None:
     """
     Add scos config modifications to os.environ
     """
-    if plugin != "scos":
+    if plugin != entry_points(value=__name__)[0].name:
         return
     env_var: str = os.environ.get("CONFIG_MOD")
     if env_var is None:

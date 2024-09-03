@@ -20,8 +20,8 @@ INSTALLED_APPS.append('cms.djangoapps.scos')
     },
     {
         "file": "/openedx/edx-platform/lms/templates/courseware/course_about.html",
-        "search_text": "${clean_dangerous_html(get_course_about_section(request, course, \"overview\"))}",
-        "replace_text": "${clean_dangerous_html(get_course_about_section(request, course, \"overview\"))}" + \
+        "search_text": "(get_course_about_section(request, course, \"overview\"))}",
+        "replace_text": "(get_course_about_section(request, course, \"overview\"))}" + \
 """
         % if scos:
           <section class="about">
