@@ -1,6 +1,7 @@
-
-formatAllJSON();
-expandTextareas();
-courseJSONUpdate();
-addOnChangeEvent();
-addCourseInfoFormEvent(courseUpdateSendUrl, courseJSON, csrftoken);
+document.addEventListener("DOMContentLoaded", (event) => {
+    formatAllJSON();
+    expandTextareas();
+    courseJSONUpdate();
+    addOnChangeEvent();
+    addCourseInfoFormEvent(courseAddSendUrl, courseJSON, csrftoken);
+});

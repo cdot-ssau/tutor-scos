@@ -12,7 +12,7 @@ function formatJSONCode(unformattedJSON) {
 
 function formatAllJSON() {
     for (let element of document.getElementsByClassName("json-code")) {
-        element.innerHTML = formatJSONCode(JSON.parse(element.innerText));
+        element.innerHTML = formatJSONCode(JSON.parse(element.innerHTML));
     }
 }
 
