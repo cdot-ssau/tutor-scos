@@ -125,7 +125,13 @@ class CourseInfoLanguage(CourseInfoAttr):
 
         LANGUAGES = {
             "Русский": "ru",
+            "ru": "ru",
+            "RU": "ru",
+            "Ru": "ru",
             "English": "en",
+            "en": "en",
+            "EN": "en",
+            "En": "en",
         }
 
         def __set__(self, instance, value: list):
