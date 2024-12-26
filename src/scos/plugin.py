@@ -50,9 +50,9 @@ CONFIG_MOD: dict = {
 }
 
 @hooks.Actions.PLUGIN_LOADED.add()
-def add_scos_config_mod_to_environ(plugin: str) -> None:
+def add_config_mod_to_environ(plugin: str) -> None:
     """
-    Add scos config modifications to os.environ
+    Добавляем изменения конфигурации вносимые плагином в os.environ
     """
     if plugin != entry_points(value=__name__)[0].name:
         return
@@ -74,7 +74,7 @@ def add_scos_config_mod_to_environ(plugin: str) -> None:
 @hooks.Actions.PLUGINS_LOADED.add()
 def write_changes_to_config():
     """
-    Add config modifications from os.environ to config 
+    Добавляем изменения конфигурации из os.environ в config 
     """
     config: Config = tutor_config.load_minimal(ROOT_PATH)
     env_var: str = os.environ.get("CONFIG_MOD")
@@ -97,9 +97,10 @@ def write_changes_to_config():
 
 
 
-def check_defaults(key: str, default: str = "") -> str:
+def scos_config(key: str, default: str = "", echo: bool = False) -> str:
     """
-    Проверяем изменены ли настройки по умолчанию
+    Устанавливаем настройки по умолчанию и выводим сообщение о необходимости
+    обновить настройки по умолчанию
     """
     config: Config = tutor_config.load_minimal(ROOT_PATH)
     value: Union[str, None] = config.get(key)
@@ -107,26 +108,35 @@ def check_defaults(key: str, default: str = "") -> str:
         value = default
         config.update({key: value})
         tutor_config.save_config_file(ROOT_PATH, config)
-    if value == default:
+    if value == default and echo:
         fmt.echo_info(
             f"Обновите переменную {key} в конфигурационном файле:\n"
             f"{ROOT_PATH + '/config.yml'}"
         )
     return value
 
-SCOS_OIDC_ENDPOINT: str = check_defaults(
+SCOS_OIDC_ENDPOINT: str = scos_config(
     "SCOS_OIDC_ENDPOINT",
     "https://auth-test.online.edu.ru/realms/portfolio"
 )
-SCOS_BASE_URL: str = check_defaults(
+SCOS_BASE_URL: str = scos_config(
     "SCOS_BASE_URL",
     "https://test.online.edu.ru"
 )
-SCOS_X_CN_UUID: str = check_defaults(
+SCOS_X_CN_UUID: str = scos_config(
     "SCOS_X_CN_UUID",
+    echo = True
 )
-SCOS_PARTNER_ID: str = check_defaults(
+SCOS_PARTNER_ID: str = scos_config(
     "SCOS_PARTNER_ID",
+    echo = True
+)
+SCOS_HTTPS_ENABLE: str = scos_config(
+    "SCOS_HTTPS_ENABLE",
+    True
+)
+SCOS_HTTPS_PROXY: str = scos_config(
+    "SCOS_HTTPS_PROXY"
 )
 
 
@@ -141,13 +151,21 @@ hooks.Filters.ENV_PATCHES.add_items(
             "cms-env",
             f"SCOS_BASE_URL: \"{SCOS_BASE_URL}\""
         ),
-                (
+        (
             "cms-env",
             f"SCOS_X_CN_UUID: \"{SCOS_X_CN_UUID}\""
         ),
-                (
+        (
             "cms-env",
             f"SCOS_PARTNER_ID: \"{SCOS_PARTNER_ID}\""
+        ),
+        (
+            "cms-env",
+            f"SCOS_HTTPS_ENABLE: \"{SCOS_HTTPS_ENABLE}\""
+        ),
+        (
+            "cms-env",
+            f"SCOS_HTTPS_PROXY: \"{SCOS_HTTPS_PROXY}\""
         ),
     ]
 )

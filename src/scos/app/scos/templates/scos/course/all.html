@@ -17,14 +17,16 @@
             <th>Название онлайн-курса</th>
             <th>Дата ближайшего запуска</th>
             <th>Правообладатель</th>
-            <th>institution_id</th>
+            <th>Статус</th>
+            <th>Статус модерации</th>
         </tr>
     {% for course in scos_courses.results %}
         <tr class="courses" onclick="window.location='{% url 'scos:course' global_id=course.global_id %}';">
             <td>{{ course.title }}</td>
             <td>{{ course.started_at }}</td>
             <td>{{ course.institution_short_title }}</td>
-            <td>{{ course.institution_id }}</td>
+            <td>{{ course.status }}</td>
+            <td>{{ course.moderation_status }}</td>
         </tr>
     {% endfor %}
     </table>

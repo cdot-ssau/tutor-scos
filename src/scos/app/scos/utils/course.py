@@ -1,29 +1,40 @@
 
-import os
 import copy
 import re
-from importlib import import_module
-from html.parser import HTMLParser
-from typing import Any, Union, Dict, List, Tuple
+from typing import Any, Union, Dict, List
 import json
 
 import requests
+
+from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 from openedx.core.djangoapps.content.course_overviews.models import ( # pylint: disable=import-error
     CourseOverview,
 )
 
+from .config import (
+    LMS_URL,
+)
 
 
-SETTINGS = import_module(os.environ["DJANGO_SETTINGS_MODULE"])
-LMS_BASE_URL = SETTINGS.LMS_BASE
-HTTPS = SETTINGS.HTTPS
 
-if HTTPS == "on":
-    LMS_URL = f"https://{LMS_BASE_URL}"
-elif HTTPS == "off":
-    LMS_URL = f"http://{LMS_BASE_URL}"
+class AttrValueDescriptor:
 
+    def __set_name__(self, owner, name) -> None:
+        self._name = name
+
+    def __set__(self, instance, value: Union[List[Tag], Any]) -> None:
+        if self.tag_in_value(value):
+            value = value[0].get_text()
+        instance.__dict__[self._name] = value
+
+    @staticmethod
+    def tag_in_value(value: list) -> bool:
+        return (
+            isinstance(value, list) and
+            not all(not isinstance(e, Tag) for e in value)
+        )
 
 
 class CourseInfoAttr:
@@ -44,23 +55,22 @@ class CourseInfoAttr:
         self.moderated = moderated
         self.value = value
 
-class AttrValueDescriptor:
-
-    def __set_name__(self, owner, name):
-        self._name = name
-
-    def __set__(self, instance, value):
-        instance.__dict__[self._name] = value
+    value = AttrValueDescriptor()
 
 class CourseInfoDescription(CourseInfoAttr):
 
     class Description(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list) -> None:
-            if value:
-                instance.__dict__[self._name] = "<br>".join(value)
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+            if self.tag_in_value(value):
+                description = []
+                for v in value:
+                    if isinstance(v, Tag):
+                        description += (
+                            str(c) for c in v.contents if c.text.strip()
+                        )
+                value = "".join(description)
+            instance.__dict__[self._name] = value
 
     value = Description()
 
@@ -68,42 +78,86 @@ class CourseInfoCompetences(CourseInfoAttr):
 
     class Competences(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list) -> None:
-            if value:
-                instance.__dict__[self._name] = "\n".join(value)
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+            if self.tag_in_value(value):
+                competences = []
+                for v in value:
+                    if isinstance(v, Tag):
+                        competences += (
+                            str(c) for c in v.contents if c.text.strip()
+                        )
+                value = "".join(competences)
+            instance.__dict__[self._name] = value
 
     value = Competences()
+
+class CourseInfoRequirements(CourseInfoAttr):
+
+    class Requirements(AttrValueDescriptor):
+
+        def __set__(self, instance, value: Union[List[Tag], List[str]]) -> None:
+            if self.tag_in_value(value):
+                requirements = []
+                for v in value:
+                    if isinstance(v, Tag):
+                        requirements += (
+                            c.get_text() for c in v.contents if c.text.strip()
+                        )
+                value = requirements
+            instance.__dict__[self._name] = value
+
+    value = Requirements()
 
 class CourseInfoContent(CourseInfoAttr):
 
     class Content(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list) -> None:
-            if value:
-                instance.__dict__[self._name] = \
-                    f"<ul><li>{'</li><li>'.join(value)}</li></ul>"
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+            if self.tag_in_value(value):
+                content = []
+                for v in value:
+                    if isinstance(v, Tag):
+                        content += (
+                            str(c) for c in v.contents if c.text.strip()
+                        )
+                value = "".join(content)
+            instance.__dict__[self._name] = value
 
     value = Content()
+
+class CourseInfoDirection(CourseInfoAttr):
+
+    class Direction(AttrValueDescriptor):
+
+        def __set__(self, instance, value: Union[List[Tag], List[str]]) -> None:
+            if self.tag_in_value(value):
+                direction = []
+                for v in value:
+                    if isinstance(v, Tag):
+                        direction += (
+                            c.get_text() for c in v.contents if c.text.strip()
+                        )
+                value = direction
+            instance.__dict__[self._name] = value
+
+    value = Direction()
 
 class CourseInfoDuration(CourseInfoAttr):
 
     class Duration(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list):
-            if value:
-                instance.__dict__[self._name] = {
+        def __set__(self, instance, value: Union[List[Tag], int, dict]) -> None:
+            if self.tag_in_value(value):
+                try:
+                    value = int(value[0].get_text())
+                except ValueError:
+                    value = 1
+            if isinstance(value, int):
+                value = {
                     "code": "week",
-                    "value": int(value[0])
+                    "value": value
                 }
-            else:
-                instance.__dict__[self._name] = {
-                    "code": "week",
-                    "value": None
-                }
+            instance.__dict__[self._name] = value
 
     value = Duration()
 
@@ -111,11 +165,13 @@ class CourseInfoLectures(CourseInfoAttr):
 
     class Lectures(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list):
-            if value:
-                instance.__dict__[self._name] = int(value[0])
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], int]) -> None:
+            if self.tag_in_value(value):
+                try:
+                    value = int(value[0].get_text())
+                except ValueError:
+                    return None
+            instance.__dict__[self._name] = value
 
     value = Lectures()
 
@@ -134,14 +190,12 @@ class CourseInfoLanguage(CourseInfoAttr):
             "En": "en",
         }
 
-        def __set__(self, instance, value: list):
-            if value:
-                if value[0] in self.LANGUAGES:
-                    instance.__dict__[self._name] = self.LANGUAGES[value[0]]
-                else:
-                    instance.__dict__[self._name] = ""
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+            if self.tag_in_value(value):
+                value = value[0].get_text()
+            if value in self.LANGUAGES:
+                value = self.LANGUAGES[value]
+            instance.__dict__[self._name] = value
 
     value = Language()
 
@@ -151,19 +205,21 @@ class CourseInfoCert(CourseInfoAttr):
 
         VALUES = {
             "Есть": "true",
-            "Нет": "false",
+            "есть": "true",
             "Yes": "true",
+            "yes": "true",
+            "Нет": "false",
+            "нет": "false",
             "No": "false",
+            "no": "false",
         }
 
-        def __set__(self, instance, value: list):
-            if value:
-                if value[0] in self.VALUES:
-                    instance.__dict__[self._name] = self.VALUES[value[0]]
-                else:
-                    instance.__dict__[self._name] = None
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+            if self.tag_in_value(value):
+                value = value[0].get_text()
+            if value in self.VALUES:
+                value = self.VALUES[value]
+            instance.__dict__[self._name] = value
 
     value = Cert()
 
@@ -171,11 +227,16 @@ class CourseInfoResults(CourseInfoAttr):
 
     class Results(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list):
-            if value:
-                instance.__dict__[self._name] = " ".join(value)
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+            if self.tag_in_value(value):
+                results = []
+                for v in value:
+                    if isinstance(v, Tag):
+                        results += (
+                            str(c) for c in v.contents if c.text.strip()
+                        )
+                value = "".join(results)
+            instance.__dict__[self._name] = value
 
     value = Results()
 
@@ -183,37 +244,15 @@ class CourseInfoCredits(CourseInfoAttr):
 
     class Credits(AttrValueDescriptor):
 
-        def __set__(self, instance, value: list):
-            if value:
-                instance.__dict__[self._name] = float(value[0])
-            else:
-                instance.__dict__[self._name] = None
+        def __set__(self, instance, value: Union[List[Tag], float]) -> None:
+            if self.tag_in_value(value):
+                try:
+                    value = float(value[0].get_text())
+                except ValueError:
+                    return None
+            instance.__dict__[self._name] = value
 
     value = Credits()
-
-class CourseInfoTeachers(CourseInfoAttr):
-
-    class Teachers(AttrValueDescriptor):
-
-        def __set__(self, instance, value: list):
-            if value:
-                teachers = []
-                for teacher in value:
-                    teachers.append(
-                        {
-                            "display_name":[],
-                            "image": [],
-                            "description": [],
-                        }
-                    )
-                    teachers[-1]["display_name"] = " ".join(teacher["display_name"])
-                    teachers[-1]["image"] = LMS_URL + teacher["image"]
-                    teachers[-1]["description"] = " ".join(teacher["description"])
-                instance.__dict__[self._name] = teachers
-            else:
-                instance.__dict__[self._name] = None
-
-    value = Teachers()
 
 class CourseInfo:
 
@@ -268,9 +307,9 @@ class CourseInfo:
             required = True,
             moderated = True
         )
-        self.requirements = CourseInfoAttr(
+        self.requirements = CourseInfoRequirements(
             name = "requirements",
-            valuetype = "string[]",
+            valuetype = "list",
             description = "Массив строк - входных требований к обучающемуся",
             required = True,
             moderated = True
@@ -289,7 +328,7 @@ class CourseInfo:
             required = True,
             moderated = False
         )
-        self.direction = CourseInfoAttr(
+        self.direction = CourseInfoDirection(
             name = "direction",
             valuetype = "list",
             description = "Массив идентификаторов направлений",
@@ -338,7 +377,7 @@ class CourseInfo:
             required = False,
             moderated = False
         )
-        self.teachers = CourseInfoTeachers(
+        self.teachers = CourseInfoAttr(
             name = "teachers",
             valuetype = "list",
             description = "Массив лекторов",
@@ -477,144 +516,11 @@ class CourseInfo:
             ensure_ascii=False
         )
 
-class OverviewHTMLParser(HTMLParser):
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.data: Dict[str, List[str]] = {}
-        self.data_read: bool = False
-        self.tag_attr: str = ""
-        self.tag_count: int = 0
-        self.tag: str = ""
-
-    def handle_starttag(
-        self,
-        tag: str,
-        attrs: List[Tuple[str, Union[str, None]]]
-    ) -> None:
-        if self.data_read is True:
-            self.tag_count += 1
-        else:
-            tag_attrs = [attr[1] for attr in attrs if attr[0] == "data-scos"]
-            if tag_attrs:
-                self.tag_attr = tag_attrs[0]
-                self.data_read = True
-                self.tag = tag
-        return super().handle_starttag(tag, attrs)
-
-    def handle_data(self, data: str) -> None:
-        data = data.strip()
-        if self.data_read and data:
-            if self.tag_attr in self.data:
-                self.data[self.tag_attr].append(data)
-            else:
-                self.data.update({self.tag_attr: [data, ]})
-
-    def handle_endtag(self, tag: str) -> None:
-        if self.data_read and self.tag_count == 0 and self.tag == tag:
-            self.data_read: bool = False
-            self.tag_count: int = 0
-            self.tag: str = ""
-            self.tag_attr: str = ""
-        if self.data_read and self.tag_count > 0:
-            self.tag_count -= 1
-
-class TeachersHTMLParser(HTMLParser):
-
-    teacher_attr = [
-        "display_name",
-        "image",
-        "description",
-    ]
-    void_tags = [
-        "img",
-        "br",
-    ]
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.teachers: List[Dict[str, Union[List[str], str]]] = []
-        self.teacher: bool = False
-        self.teacher_tag_count: int = 0
-        self.teacher_tag: str = ""
-        self.data_read: bool = False
-        self.tag_attr: str = ""
-        self.tag_count: int = 0
-        self.tag: str = ""
-
-    def handle_starttag(
-        self,
-        tag: str,
-        attrs: List[Tuple[str, Union[str, None]]]
-    ) -> None:
-        if self.data_read is True:
-            if tag not in self.void_tags:
-                self.tag_count += 1
-        else:
-            tag_attrs = [
-                attr[1] for attr in attrs if attr[0] == "data-scos-teacher"
-            ]
-            if tag_attrs:
-                self.tag_attr = tag_attrs[0]
-                if self.tag_attr == "teacher":
-                    self.teacher = True
-                    self.teachers.append(
-                        {
-                            "display_name":[],
-                            "image": [],
-                            "description": [],
-                        }
-                    )
-                    self.tag_attr = ""
-                if self.teacher is True and self.tag_attr in self.teacher_attr:
-                    self.data_read = True
-                    self.tag = tag
-                else:
-                    self.tag_attr = ""
-            if tag == "img" and self.data_read and self.tag_attr == "image":
-                img_attrs = [
-                    attr[1] for attr in attrs if attr[0] == "src"
-                ]
-                if  img_attrs:
-                    self.teachers[-1][self.tag_attr] = img_attrs[0]
-                self.data_read: bool = False
-                self.tag_count: int = 0
-                self.tag: str = ""
-                self.tag_attr: str = ""
-
-        return super().handle_starttag(tag, attrs)
-
-    def handle_data(self, data: str) -> None:
-        data = data.strip()
-        if self.data_read and data:
-            self.teachers[-1][self.tag_attr].append(data)
-        return super().handle_data(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if self.data_read and self.tag_count == 0 and self.tag == tag:
-            self.data_read: bool = False
-            self.tag_count: int = 0
-            self.tag: str = ""
-            self.tag_attr: str = ""
-        if self.data_read and self.tag_count > 0:
-            self.tag_count -= 1
-        if self.teacher and self.teacher_tag_count and self.teacher_tag == tag:
-            self.teacher: bool = False
-            self.teacher_tag_count: int = 0
-            self.teacher_tag: str = ""
-        if self.teacher and self.teacher_tag_count > 0:
-            self.teacher_tag_count -= 1
-        return super().handle_endtag(tag)
-
-
-
-def get_course_key(course_url: str) -> Union[str, None]:
-    match = re.match(r"(^.*/courses/)([\w:+-]+)(/.*$|$)", course_url)
-    if match:
-        return match.group(2)
-    return None
-
 def get_course_info_from_about(about_url: str) -> Union[dict, None]:
+    def data_scos(tag):
+        return tag.has_attr("data-scos")
+    data: Dict[str, Tag] = {}
+    teachers: List[Dict[str, Union[List[str], str]]] = []
     try:
         response: requests.Response = requests.get(
             url=about_url,
@@ -622,15 +528,38 @@ def get_course_info_from_about(about_url: str) -> Union[dict, None]:
         )
     except requests.exceptions.ConnectTimeout:
         return None
-    overview_parser = OverviewHTMLParser()
-    teachers_parser = TeachersHTMLParser()
-    overview_parser.feed(response.text)
-    teachers_parser.feed(response.text)
-    course_info_from_about = {
-        **overview_parser.data,
-        "teachers": teachers_parser.teachers
-    }
-    return course_info_from_about
+    except requests.exceptions.ReadTimeout:
+        return None
+    about = BeautifulSoup(response.text, "html.parser")
+    for tag in about.find_all(data_scos):
+        if tag["data-scos"] in data:
+            data[tag["data-scos"]].append(tag)
+        else:
+            data.update({tag["data-scos"]: [tag, ]})
+    for tag in about.find_all(attrs={"data-scos-teacher": "teacher"}):
+        teachers.append({})
+        teachers[-1]["display_name"] = " ".join(
+            tag.find(
+                attrs={"data-scos-teacher": "display_name"}
+            ).stripped_strings
+        )
+        teachers[-1]["image"] = tag.find(
+            attrs={"data-scos-teacher": "image"}
+        )["src"]
+        teachers[-1]["description"] =  " ".join(
+            tag.find(
+                attrs={"data-scos-teacher": "description"}
+            ).stripped_strings
+        )
+    if teachers:
+        data.update({"teachers": teachers})
+    return data
+
+def get_course_key(course_url: str) -> Union[str, None]:
+    match = re.match(r"(^.*/courses/)([\w:+-]+)(/.*$|$)", course_url)
+    if match:
+        return match.group(2)
+    return None
 
 def get_course_info_from_overview(course_key: str) -> Union[dict, None]:
     course_overview = CourseOverview.get_from_id(course_key)

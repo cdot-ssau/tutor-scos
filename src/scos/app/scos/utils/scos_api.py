@@ -8,11 +8,8 @@ https://tech.online.edu.ru/files/api.pdf - Описание программны
 адресу online.edu.ru
 """
 
-import os
-import codecs
 import logging
-from typing import Any, List
-import yaml
+from typing import Any
 
 import requests
 
@@ -20,15 +17,17 @@ from .course import (
     get_course_info_from_overview,
 )
 
+from .config import (
+    SCOS_BASE_URL,
+    SCOS_X_CN_UUID,
+    SCOS_PARTNER_ID,
+    SCOS_HTTPS_PROXY,
+)
+
+
 
 LOGGER = logging.getLogger(__name__)
 
-CONFIG_FILE = os.environ["CMS_CFG"]
-with codecs.open(CONFIG_FILE, encoding="utf-8") as f:
-    __config__ = yaml.safe_load(f)
-    SCOS_BASE_URL = __config__["SCOS_BASE_URL"]
-    SCOS_X_CN_UUID = __config__["SCOS_X_CN_UUID"]
-    SCOS_PARTNER_ID = __config__["SCOS_PARTNER_ID"]
 HEADERS_GET = {
     "X-CN-UUID": SCOS_X_CN_UUID,
     "Accept": "application/json",
@@ -38,6 +37,10 @@ HEADERS = {
     "Content-type": "application/json",
     "Accept": "application/json",
 }
+PROXIES = {}
+
+if SCOS_HTTPS_PROXY:
+    PROXIES.update({"https":SCOS_HTTPS_PROXY})
 
 
 
@@ -46,27 +49,37 @@ def scos_connection_check() -> str:
     1. Проверка подключения к API тестового контура ГИС СЦОС
     https://tech.online.edu.ru/files/3_apllication_instructions.pdf
     """
+    url = f"{SCOS_BASE_URL}/api/v2/connections/check"
     try:
         response: requests.Response = requests.get(
-            url = f"{SCOS_BASE_URL}/api/v2/connections/check",
+            url = url,
             headers = HEADERS_GET,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
         return "Connection timeout"
+    except requests.exceptions.ReadTimeout:
+        return "Read timeout"
     return str(response.status_code)
 
 def scos_get_platforms() -> Any:
     """
     3.1.10. Список всех платформ
     """
+    url = f"{SCOS_BASE_URL}/api/v2/registry/partners/platforms"
     try:
         response: requests.Response = requests.get(
-            url = f"{SCOS_BASE_URL}/api/v2/registry/partners/platforms",
+            url = url,
             headers = HEADERS_GET,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         platforms = response.json()
@@ -78,13 +91,18 @@ def scos_get_rightholders() -> Any:
     """
     3.1.11. Список всех Правообладателей
     """
+    url = f"{SCOS_BASE_URL}/api/v2/registry/partners/rightholders"
     try:
         response: requests.Response = requests.get(
-            url = f"{SCOS_BASE_URL}/api/v2/registry/partners/rightholders",
+            url = url,
             headers = HEADERS_GET,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         rightholders = response.json()
@@ -96,7 +114,10 @@ def scos_partners_dict(partners: dict) -> dict:
     """
     Возвращает словарь из списка, ключ - global_id
     """
-    partners = {row["global_id"]: row for row in partners["rows"]}
+    try:
+        partners = {row["global_id"]: row for row in partners["rows"]}
+    except TypeError:
+        return None
     return partners
 
 def scos_get_courses(**kwargs) -> Any:
@@ -108,6 +129,7 @@ def scos_get_courses(**kwargs) -> Any:
 direction_id, activity_id. По умолчанию используется фильтр по идентификатору
 платформы - partner_id.
     """
+    url = f"{SCOS_BASE_URL}/api/v2/registry/courses"
     params = {"partner_id": SCOS_PARTNER_ID}
     options: set[str] = {
         "language",
@@ -121,12 +143,16 @@ direction_id, activity_id. По умолчанию используется фи
             params.update(option=kwargs[option])
     try:
         response: requests.Response = requests.get(
-            url = f"{SCOS_BASE_URL}/api/v2/registry/courses",
+            url = url,
             headers = HEADERS_GET,
+            proxies = PROXIES,
+            verify = False,
             params = params,
-            timeout = 5.000,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_courses = response.json()
@@ -138,13 +164,18 @@ def scos_get_course(global_id: str) -> Any:
     """
     3.1.15. Получение одного онлайн-курса
     """
+    url = f"{SCOS_BASE_URL}/api/v2/registry/courses/{global_id}"
     try:
         response: requests.Response = requests.get(
-            url = f"{SCOS_BASE_URL}/api/v2/registry/courses/{global_id}",
+            url = url,
             headers = HEADERS_GET,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         course_info = response.json()
@@ -168,9 +199,13 @@ def scos_post_course(course_info: dict) -> Any:
             url = url,
             json = payload,
             headers = HEADERS,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_response = response.json()
@@ -195,15 +230,65 @@ def scos_put_course(course_info: dict, global_id:str) -> Any:
             url = url,
             json = payload,
             headers = HEADERS,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_response = response.json()
     except requests.exceptions.JSONDecodeError:
         return None
     return scos_response
+
+def scos_get_moderation_status(global_id:str) -> Any:
+    """
+    3.1.7. Получение статуса оценки онлайн-курса
+    """
+    url = f"{SCOS_BASE_URL}/api/v2/registry/courses/moderation_status?course_id={global_id}"
+    try:
+        response: requests.Response = requests.get(
+            url = url,
+            headers = HEADERS_GET,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
+        )
+    except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
+        return None
+    try:
+        moderation_status = response.json()
+    except requests.exceptions.JSONDecodeError:
+        return None
+    return moderation_status
+
+def scos_get_status(global_id:str) -> Any:
+    """
+    3.1.9. Получение статуса онлайн-курса
+    """
+    url = f"{SCOS_BASE_URL}/api/v2/registry/courses/moderation_status?course_id={global_id}"
+    try:
+        response: requests.Response = requests.get(
+            url = url,
+            headers = HEADERS_GET,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
+        )
+    except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
+        return None
+    try:
+        status = response.json()
+    except requests.exceptions.JSONDecodeError:
+        return None
+    return status
 
 def scos_post_participation(
         course_id: str,
@@ -235,9 +320,13 @@ def scos_post_participation(
             url = url,
             json = [registration_object,],
             headers = HEADERS,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_response = response.json()
@@ -272,9 +361,13 @@ def scos_delete_participation(
             url = url,
             json = [cancellation_object,],
             headers = HEADERS,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_response = response.json()
@@ -317,9 +410,13 @@ def scos_post_subsection_grade(
             url = url,
             json = [subsection_grade_object,],
             headers = HEADERS,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_response = response.json()
@@ -356,9 +453,13 @@ def scos_post_course_grade(
             url = url,
             json = [course_grade_object,],
             headers = HEADERS,
-            timeout = 5.000,
+            proxies = PROXIES,
+            verify = False,
+            timeout = (3.0, 60.0),
         )
     except requests.exceptions.ConnectTimeout:
+        return None
+    except requests.exceptions.ReadTimeout:
         return None
     try:
         scos_response = response.json()
@@ -373,7 +474,7 @@ def scos_post_course_grade(
 def get_scos_course(course_key) -> Any:
     """
     Возвращает подробную информацию об одном онлайн курсе со СЦОС если курс
-с соответствующим названием и расположением найден.
+    с соответствующим названием и расположением найден.
     """
     course_info_from_overview = get_course_info_from_overview(course_key)
     if course_info_from_overview is None:

@@ -1,7 +1,7 @@
 {% extends "scos/base.html" %}
 
 {% block content %}
-
+{% if  scos_platform %}
 <div class="v-container">
     <h2>{{ scos_platform.title }}</h2>
 </div>
@@ -10,5 +10,6 @@
     <a class="button" href="{% url 'scos:course_all' %}">Курсы</a>
     <a class="button" href="{% url 'scos:user_courses' %}">Пользователи</a>
 </div>
+{% endif %}
 
 {% endblock content %}
