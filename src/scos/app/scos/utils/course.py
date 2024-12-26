@@ -543,7 +543,7 @@ def get_course_info_from_about(about_url: str) -> Union[dict, None]:
                 attrs={"data-scos-teacher": "display_name"}
             ).stripped_strings
         )
-        teachers[-1]["image"] = tag.find(
+        teachers[-1]["image"] = LMS_URL + tag.find(
             attrs={"data-scos-teacher": "image"}
         )["src"]
         teachers[-1]["description"] =  " ".join(

@@ -144,7 +144,7 @@ SCOS_HTTPS_PROXY: str = scos_config(
 hooks.Filters.ENV_PATCHES.add_items(
     [
         (
-            "lms-env",
+            "cms-env",
             f"SCOS_OIDC_ENDPOINT: \"{SCOS_OIDC_ENDPOINT}\""
         ),
         (

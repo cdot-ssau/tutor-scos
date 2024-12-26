@@ -13,6 +13,9 @@ from typing import Any
 
 import requests
 
+from urllib3 import disable_warnings
+from urllib3.exceptions import InsecureRequestWarning
+
 from .course import (
     get_course_info_from_overview,
 )
@@ -24,7 +27,7 @@ from .config import (
     SCOS_HTTPS_PROXY,
 )
 
-
+disable_warnings(InsecureRequestWarning)
 
 LOGGER = logging.getLogger(__name__)
 

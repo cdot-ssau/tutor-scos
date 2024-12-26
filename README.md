@@ -54,7 +54,7 @@ SCOS_OIDC_ENDPOINT: https://auth.online.edu.ru/realms/portfolio
 SCOS_HTTPS_ENABLE: true
 ```
 
-- Настройки https прокси. Указывается в [формате](https://requests.readthedocs.io/en/latest/user/advanced/#proxies) `http://<user>:<password>@<id address>:<port>/`.
+- Настройки https прокси. Указывается в [формате](https://requests.readthedocs.io/en/latest/user/advanced/#proxies) `http://<user>:<password>@<ip address>:<port>/`.
 
 ```yaml
 SCOS_HTTPS_PROXY: http://user:password@10.10.10.10:80/

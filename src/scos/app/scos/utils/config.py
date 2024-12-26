@@ -7,6 +7,7 @@ CONFIG_FILE = os.environ["CMS_CFG"]
 with codecs.open(CONFIG_FILE, encoding="utf-8") as f:
     __config__ = yaml.safe_load(f)
     SCOS_BASE_URL = __config__["SCOS_BASE_URL"]
+    SCOS_OIDC_ENDPOINT = __config__["SCOS_OIDC_ENDPOINT"]
     SCOS_X_CN_UUID = __config__["SCOS_X_CN_UUID"]
     SCOS_PARTNER_ID = __config__["SCOS_PARTNER_ID"]
     SCOS_ENABLE_HTTPS = __config__["SCOS_HTTPS_ENABLE"]
