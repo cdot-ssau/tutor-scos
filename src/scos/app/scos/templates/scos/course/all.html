@@ -9,6 +9,12 @@
     <a class="button" href="{% url 'scos:scos' %}">Панель СЦОС</a>
     <a class="button" href="{% url 'scos:course_add' %}">Добавить курс</a>
 </div>
+<form id="course_id_form">
+    <div class="h-container">
+        <input id="course_id_submit" name="submit_course_id" class="button" type="submit" value="Проверить по ID">
+        <input id="course_id_text" name="text_course_id" type="text" style="width: 24rem; height: 3rem; font-size: 1rem; text-align: center" required>
+    </div>
+</form>
 
 <div class="v-container">
     <p>Всего курсов: {{ scos_courses.total_count }}</p>
@@ -21,14 +27,22 @@
             <th>Статус модерации</th>
         </tr>
     {% for course in scos_courses.results %}
-        <tr class="courses" onclick="window.location='{% url 'scos:course' global_id=course.global_id %}';">
-            <td>{{ course.title }}</td>
-            <td>{{ course.started_at }}</td>
-            <td>{{ course.institution_short_title }}</td>
-            <td>{{ course.status }}</td>
-            <td>{{ course.moderation_status }}</td>
+        <tr class="courses">
+            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.title }}</a></td>
+            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.started_at }}</a></td>
+            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.institution_short_title }}</a></td>
+            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.status }}</a></td>
+            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.moderation_status }}</a></td>
         </tr>
+    </a>
     {% endfor %}
     </table>
 </div>
+
+<script>
+    const openCourseByIDUrl = "{% url 'scos:course_check_id' %}";
+</script>
+{% load static %}
+<script src="{% static 'scos/js/course/all.js' %}"></script>
+
 {% endblock content %}

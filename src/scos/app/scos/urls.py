@@ -11,6 +11,7 @@ from .views import (
     course_add,
     course_send,
     course_update,
+    course_check_id,
     user_courses,
     user_course
 )
@@ -24,6 +25,7 @@ urlpatterns = [
     path("course/update/<str:global_id>/", course_update, name="course_update"),
     path("course/send/$", course_send, name="course_send"),
     path("course/send/<str:global_id>/$", course_send, name="course_send"),
+    path("course/check_id/", course_check_id, name="course_check_id"),
     path("course/<str:global_id>/", course, name="course"),
     path("user/courses/", user_courses, name="user_courses"),
     path("user/course/<str:global_id>/", user_course, name="user_course"),

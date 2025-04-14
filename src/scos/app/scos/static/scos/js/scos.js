@@ -107,3 +107,42 @@ async function sendCourseInfo(url, courseJSON, csrftoken) {
             document.getElementById("send_course_info").disabled = false;
     }
 }
+
+// add event listener to course_info_form
+
+function addCourseIDFormEvent(url) {
+    document.getElementById("course_id_form").addEventListener(
+        "submit", async (event) => {
+            event.preventDefault();
+            openCourseByID(url);
+        }
+    );
+}
+
+// open course by ID
+
+async function openCourseByID(url) {
+    document.getElementById("course_id_submit").disabled = true;
+    let course_id = document.getElementById("course_id_text").value;
+    url = url + `?course_id=${course_id}`
+    const request = new Request(url, {
+        method: "GET",
+        mode: 'same-origin'
+    });
+    try {
+        const response = await fetch(request);
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
+        }
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+        response.text().then((value) => {
+            window.alert(value);
+        });
+        document.getElementById("course_id_submit").disabled = false;
+    } catch (error) {
+            window.alert(error.message);
+            document.getElementById("course_id_submit").disabled = false;
+    }
+}

@@ -38,21 +38,24 @@ INSTALLED_APPS.append('cms.djangoapps.scos')
 """
         from cms.djangoapps.scos.utils.scos_api import get_scos_course
         from cms.djangoapps.scos.utils.config import SCOS_BASE_URL
-        scos_course = get_scos_course(course_key)
-        if scos_course:
-            if SCOS_BASE_URL == "https://test.online.edu.ru":
-                widget_url = "https://test.online.edu.ru"
-            else:
-                widget_url = "https://online.edu.ru"
-            context.update(
-                {
-                    "scos": {
-                        "widget_url": widget_url,
-                        "course_id": scos_course["global_id"],
-                        "course_version": scos_course["business_version"],
+        try:
+            scos_course = get_scos_course(course_key)
+            if scos_course:
+                if SCOS_BASE_URL == "https://test.online.edu.ru":
+                    widget_url = "https://test.online.edu.ru"
+                else:
+                    widget_url = "https://online.edu.ru"
+                context.update(
+                    {
+                        "scos": {
+                            "widget_url": widget_url,
+                            "course_id": scos_course["global_id"],
+                            "course_version": scos_course["business_version"],
+                        }
                     }
-                }
-            )
+                )
+        except Exception as exception:
+            LOGGER.error("СЦОС courseware views. %s", exception)
 """
     }
 ]

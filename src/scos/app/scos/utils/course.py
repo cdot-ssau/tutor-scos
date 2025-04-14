@@ -181,10 +181,12 @@ class CourseInfoLanguage(CourseInfoAttr):
 
         LANGUAGES = {
             "Русский": "ru",
+            "русский": "ru",
             "ru": "ru",
             "RU": "ru",
             "Ru": "ru",
             "English": "en",
+            "english": "en",
             "en": "en",
             "EN": "en",
             "En": "en",

@@ -15,6 +15,12 @@ tutor plugins enable scos
 tutor config save
 ```
 
+- Cборка образа openedx
+
+```bash
+tutor images build openedx
+```
+
 - Настройка плагина (см. [Настройка](#настройка)).
 
 - Запуск платформы.

@@ -14,8 +14,8 @@
             <p style="display: inline-block; color: LightGreen; font-weight: bold;">Успешно</p>
         {% else %}
             <p style="display: inline-block; color: LightCoral; font-weight: bold;">Ошибка</p>
+            <script>window.console.error("SCOS connection check: {{ scos_connection_check|safe }}");</script>
         {% endif %}
-        <script>window.console.log("SCOS connection check: {{scos_connection_check}}");</script>
     </div>
     <div style="width: 400px; margin-left: auto;">
         <table>
@@ -30,5 +30,9 @@
 </header>
 
 <body>
-{% block content %}{% endblock content %}
+{% if error %}
+    <script>window.console.error("{{ error|safe }}")</script>
+{% else %}
+    {% block content %}{% endblock content %}
+{% endif %}
 </body>

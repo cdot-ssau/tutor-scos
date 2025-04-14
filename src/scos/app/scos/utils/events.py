@@ -45,7 +45,7 @@ class SCOSEventTrackingBackend(BaseBackend):
                 args = args,
                 kwargs = kwargs,
             )
-        except Exception as exception:  # pylint: disable=broad-except
+        except Exception as exception: # pylint: disable=broad-except
             logging.error(
                 "Не получилось добавить задачу СЦОС в очередь: %s",
                 exception,

@@ -1,0 +1,1 @@
+addCourseIDFormEvent(openCourseByIDUrl);

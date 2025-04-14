@@ -61,10 +61,9 @@ def scos_connection_check() -> str:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return "Connection timeout"
-    except requests.exceptions.ReadTimeout:
-        return "Read timeout"
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
+        return exception
     return str(response.status_code)
 
 def scos_get_platforms() -> Any:
@@ -80,13 +79,13 @@ def scos_get_platforms() -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         platforms = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return platforms
 
@@ -103,13 +102,13 @@ def scos_get_rightholders() -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         rightholders = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return rightholders
 
@@ -119,7 +118,8 @@ def scos_partners_dict(partners: dict) -> dict:
     """
     try:
         partners = {row["global_id"]: row for row in partners["rows"]}
-    except TypeError:
+    except TypeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return partners
 
@@ -153,13 +153,13 @@ direction_id, activity_id. По умолчанию используется фи
             params = params,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_courses = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_courses
 
@@ -176,13 +176,13 @@ def scos_get_course(global_id: str) -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         course_info = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return course_info
 
@@ -206,13 +206,13 @@ def scos_post_course(course_info: dict) -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_response = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_response
 
@@ -237,13 +237,13 @@ def scos_put_course(course_info: dict, global_id:str) -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_response = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_response
 
@@ -260,13 +260,13 @@ def scos_get_moderation_status(global_id:str) -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         moderation_status = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return moderation_status
 
@@ -283,13 +283,13 @@ def scos_get_status(global_id:str) -> Any:
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         status = response.json()
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return status
 
@@ -327,9 +327,8 @@ def scos_post_participation(
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_response = response.json()
@@ -337,7 +336,8 @@ def scos_post_participation(
             "СЦОС api. Регистрация слушателя на курс, ответ СЦОС: %s",
             scos_response
         )
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_response
 
@@ -368,9 +368,8 @@ def scos_delete_participation(
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_response = response.json()
@@ -378,7 +377,8 @@ def scos_delete_participation(
             "СЦОС api. Отмена регистрации слушателя на курс, ответ СЦОС: %s",
             scos_response
         )
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_response
 
@@ -417,9 +417,8 @@ def scos_post_subsection_grade(
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_response = response.json()
@@ -427,7 +426,8 @@ def scos_post_subsection_grade(
             "СЦОС api. Публикация результатов обучения, ответ СЦОС: %s",
             scos_response
         )
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_response
 
@@ -460,9 +460,8 @@ def scos_post_course_grade(
             verify = False,
             timeout = (3.0, 60.0),
         )
-    except requests.exceptions.ConnectTimeout:
-        return None
-    except requests.exceptions.ReadTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
         scos_response = response.json()
@@ -470,7 +469,8 @@ def scos_post_course_grade(
             "СЦОС api. Публикация прогрессов обучения, ответ СЦОС: %s",
             scos_response
         )
-    except requests.exceptions.JSONDecodeError:
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
         return None
     return scos_response
 
@@ -479,16 +479,15 @@ def get_scos_course(course_key) -> Any:
     Возвращает подробную информацию об одном онлайн курсе со СЦОС если курс
     с соответствующим названием и расположением найден.
     """
-    course_info_from_overview = get_course_info_from_overview(course_key)
-    if course_info_from_overview is None:
+    try:
+        course_info_from_overview = get_course_info_from_overview(course_key)
+        scos_courses = scos_get_courses()
+        for course in scos_courses["results"]:
+            if course["title"] == course_info_from_overview["title"]:
+                course_in_detail = scos_get_course(course["global_id"])
+                if (course_in_detail["external_url"] ==
+                    course_info_from_overview["external_url"]):
+                    return course_in_detail
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error("СЦОС api. %s", exception)
         return None
-    scos_courses = scos_get_courses()
-    if scos_courses is None:
-        return None
-    for course in scos_courses["results"]:
-        if course["title"] == course_info_from_overview["title"]:
-            course_in_detail = scos_get_course(course["global_id"])
-            if (course_in_detail["external_url"] ==
-                course_info_from_overview["external_url"]):
-                return course_in_detail
-    return None
