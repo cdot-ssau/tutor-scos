@@ -8,7 +8,7 @@
 </head>
 
 <header class="scos-status">
-    <div style=" width: 400px;">
+    <div>
         <p style="display: inline-block;">Статус проверки соединения со СЦОС: </p>
         {% if scos_connection_check == "200" %}
             <p style="display: inline-block; color: LightGreen; font-weight: bold;">Успешно</p>
@@ -17,7 +17,7 @@
             <script>window.console.error("SCOS connection check: {{ scos_connection_check|safe }}");</script>
         {% endif %}
     </div>
-    <div style="width: 400px; margin-left: auto;">
+    <div style="margin-left: auto;">
         <table>
             <tr>
                 <td>SCOS base url:</td><td>{{ scos_base_url }}</td>

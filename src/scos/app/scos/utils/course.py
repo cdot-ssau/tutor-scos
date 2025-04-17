@@ -1,4 +1,5 @@
 
+import logging
 import copy
 import re
 from typing import Any, Union, Dict, List
@@ -16,6 +17,8 @@ from openedx.core.djangoapps.content.course_overviews.models import ( # pylint: 
 from .config import (
     LMS_URL,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 
@@ -208,17 +211,24 @@ class CourseInfoCert(CourseInfoAttr):
         VALUES = {
             "Есть": "true",
             "есть": "true",
+            "да": "true",
+            "Да": "true",
             "Yes": "true",
             "yes": "true",
+            "true": "true",
+            "True": "true",
             "Нет": "false",
             "нет": "false",
             "No": "false",
             "no": "false",
+            "false": "false",
+            "False": "false",
         }
 
-        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+        def __set__(self, instance, value: Union[List[Tag], str, bool]) -> None:
             if self.tag_in_value(value):
                 value = value[0].get_text()
+            value = str(value)
             if value in self.VALUES:
                 value = self.VALUES[value]
             instance.__dict__[self._name] = value
@@ -229,7 +239,7 @@ class CourseInfoResults(CourseInfoAttr):
 
     class Results(AttrValueDescriptor):
 
-        def __set__(self, instance, value: Union[List[Tag], str]) -> None:
+        def __set__(self, instance, value: Union[List[Tag], str, list]) -> None:
             if self.tag_in_value(value):
                 results = []
                 for v in value:
@@ -238,6 +248,8 @@ class CourseInfoResults(CourseInfoAttr):
                             str(c) for c in v.contents if c.text.strip()
                         )
                 value = "".join(results)
+            if isinstance(value, list):
+                value = "".join(value)
             instance.__dict__[self._name] = value
 
     value = Results()
@@ -519,8 +531,10 @@ class CourseInfo:
         )
 
 def get_course_info_from_about(about_url: str) -> Union[dict, None]:
+
     def data_scos(tag):
         return tag.has_attr("data-scos")
+
     data: Dict[str, Tag] = {}
     teachers: List[Dict[str, Union[List[str], str]]] = []
     try:
@@ -528,34 +542,37 @@ def get_course_info_from_about(about_url: str) -> Union[dict, None]:
             url=about_url,
             timeout = 5.000,
         )
-    except requests.exceptions.ConnectTimeout:
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС course. %s", exception)
         return None
-    except requests.exceptions.ReadTimeout:
+    try:
+        about = BeautifulSoup(response.text, "html.parser")
+        for tag in about.find_all(data_scos):
+            if tag["data-scos"] in data:
+                data[tag["data-scos"]].append(tag)
+            else:
+                data.update({tag["data-scos"]: [tag, ]})
+        for tag in about.find_all(attrs={"data-scos-teacher": "teacher"}):
+            teachers.append({})
+            teachers[-1]["display_name"] = " ".join(
+                tag.find(
+                    attrs={"data-scos-teacher": "display_name"}
+                ).stripped_strings
+            )
+            teachers[-1]["image"] = LMS_URL + tag.find(
+                attrs={"data-scos-teacher": "image"}
+            )["src"]
+            teachers[-1]["description"] =  " ".join(
+                tag.find(
+                    attrs={"data-scos-teacher": "description"}
+                ).stripped_strings
+            )
+        if teachers:
+            data.update({"teachers": teachers})
+        return data
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error("СЦОС course. %s", exception)
         return None
-    about = BeautifulSoup(response.text, "html.parser")
-    for tag in about.find_all(data_scos):
-        if tag["data-scos"] in data:
-            data[tag["data-scos"]].append(tag)
-        else:
-            data.update({tag["data-scos"]: [tag, ]})
-    for tag in about.find_all(attrs={"data-scos-teacher": "teacher"}):
-        teachers.append({})
-        teachers[-1]["display_name"] = " ".join(
-            tag.find(
-                attrs={"data-scos-teacher": "display_name"}
-            ).stripped_strings
-        )
-        teachers[-1]["image"] = LMS_URL + tag.find(
-            attrs={"data-scos-teacher": "image"}
-        )["src"]
-        teachers[-1]["description"] =  " ".join(
-            tag.find(
-                attrs={"data-scos-teacher": "description"}
-            ).stripped_strings
-        )
-    if teachers:
-        data.update({"teachers": teachers})
-    return data
 
 def get_course_key(course_url: str) -> Union[str, None]:
     match = re.match(r"(^.*/courses/)([\w:+-]+)(/.*$|$)", course_url)
@@ -564,32 +581,36 @@ def get_course_key(course_url: str) -> Union[str, None]:
     return None
 
 def get_course_info_from_overview(course_key: str) -> Union[dict, None]:
-    course_overview = CourseOverview.get_from_id(course_key)
-    if course_overview is None:
-        return None
+
     def process_date(value):
         if value is None:
             return None
         return value.date().isoformat()
-    course_info_from_overview = {
-        "sessionid": str(course_overview.id),
-        "title": course_overview.display_name,
-        "started_at": process_date(course_overview.start),
-        "finished_at": process_date(course_overview.end),
-        "enrollment_finished_at": process_date(course_overview.enrollment_end),
-        "image": LMS_URL + course_overview.course_image_url,
-        "external_url": f"{LMS_URL}/courses/{str(course_overview.id)}/about",
-        "hours_per_week": course_overview.effort,
-        "promo_url": course_overview.course_video_url
-    }
-    return course_info_from_overview
+
+    try:
+        course_overview = CourseOverview.get_from_id(course_key)
+        course_info_from_overview = {
+            "sessionid": str(course_overview.id),
+            "title": course_overview.display_name,
+            "started_at": process_date(course_overview.start),
+            "finished_at": process_date(course_overview.end),
+            "enrollment_finished_at": process_date(course_overview.enrollment_end),
+            "image": LMS_URL + course_overview.course_image_url,
+            "external_url": f"{LMS_URL}/courses/{str(course_overview.id)}/about",
+            "hours_per_week": course_overview.effort,
+            "promo_url": course_overview.course_video_url
+        }
+        return course_info_from_overview
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error("СЦОС course. %s", exception)
+        return None
 
 def get_course_info(course_key: str) -> Union[CourseInfo, None]:
     course_info_from_overview = get_course_info_from_overview(course_key)
     course_info_from_about = get_course_info_from_about(
         f"{LMS_URL}/courses/{course_key}/about"
     )
-    if course_info_from_about is None:
+    if course_info_from_about is None or course_info_from_overview is None:
         return None
     course_info_from = {
         **course_info_from_overview,
@@ -600,3 +621,33 @@ def get_course_info(course_key: str) -> Union[CourseInfo, None]:
         if hasattr(course_info, attr):
             setattr(getattr(course_info, attr), "value", value)
     return course_info
+
+def get_course_info_from_scos(scos_course) -> Union[CourseInfo, None]:
+    try:
+        course_info = CourseInfo()
+        course_info.title.value = scos_course["title"]
+        course_info.language.value = scos_course["language"]
+        course_info.image.value = scos_course["image"]
+        course_info.description.value = scos_course["description"]
+        course_info.started_at.value = scos_course["started_at"]
+        course_info.institution.value = scos_course["institution_id"]
+        course_info.business_version.value = scos_course["business_version"]
+        course_info.enrollment_finished_at.value = scos_course["record_end_at"]
+        course_info.finished_at.value = scos_course["finished_at"]
+        course_info.duration.value = scos_course["duration"]
+        course_info.hours_per_week.value = scos_course["intensity_per_week"]
+        course_info.content.value = scos_course["content"]
+        course_info.lectures.value = scos_course["lectures_number"]
+        course_info.teachers.value = scos_course["teachers"]
+        course_info.external_url.value = scos_course["external_url"]
+        course_info.sessionid.value = get_course_key(scos_course["external_url"])
+        course_info.cert.value = scos_course["has_certificate"]
+        course_info.competences.value = scos_course["competences"]
+        course_info.requirements.value = scos_course["requirements"]
+        course_info.results.value = scos_course["learning_outcomes"]
+        course_info.direction.value = scos_course["directions"]
+        course_info.credits.value = scos_course["credits"]
+        return course_info
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error("СЦОС course. %s", exception)
+        return None

@@ -1,6 +1,6 @@
 <table class="courses">
     <tr>
-        <th colspan="2" style="width: 300px;">Параметр</th>
+        <th colspan="2" style="width: 20rem;">Параметр</th>
         <th>Значение</th>
     </tr>
     {% for attr in course.values %}
@@ -11,11 +11,18 @@
             <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable value" required></textarea>
         </td>
     </tr>
+    {% elif attr.value and attr.required == True %}
+    <tr>
+        {% include "scos/course/components/name_and_mark_cells.html" %}
+        <td>
+            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable disabled" disabled required>{{ attr.value }}</textarea>
+        </td>
+    </tr>
     {% elif attr.value %}
     <tr>
         {% include "scos/course/components/name_and_mark_cells.html" %}
         <td>
-            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable" disabled>{{ attr.value }}</textarea>
+            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable disabled" disabled>{{ attr.value }}</textarea>
         </td>
     </tr>
     {% else %}

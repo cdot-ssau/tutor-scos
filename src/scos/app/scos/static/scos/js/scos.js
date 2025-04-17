@@ -146,3 +146,24 @@ async function openCourseByID(url) {
             document.getElementById("course_id_submit").disabled = false;
     }
 }
+
+// enable disabled textareas
+
+function enableDisabledTextareas(checked) {
+    const disabledTextareas = document.querySelectorAll("textarea.disabled");
+    for (let textarea of disabledTextareas) {
+        textarea.disabled = !checked;
+    }
+}
+
+// add event listener to allow-override buttons
+
+function addAllowOverrideEvent() {
+    const allowOverrideCheckbox = document.getElementById("allow_override_checkbox");
+    allowOverrideCheckbox.addEventListener(
+        "change",
+        (event) => {
+            enableDisabledTextareas(event.target.checked);
+        }
+    );
+}

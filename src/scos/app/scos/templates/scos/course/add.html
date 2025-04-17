@@ -16,7 +16,7 @@
             <label for="course_url">Ссылка на олайн-курс на сайте Платформы:</label>
         </div>
         <div class="v-container">
-            <textarea id="course_url" name="course_url" style="width: 600px; font-size: 1.25em; resize: none;" class="expandable" required>{{ course_url }}</textarea>
+            <textarea id="course_url" name="course_url" class="expandable" required>{{ course_url }}</textarea>
         </div>
         <div class="v-container">
             <input class="button" type="submit" value="Проверить" />
@@ -30,6 +30,12 @@
         const courseAddSendUrl = "{% url 'scos:course_send' %}";
         let courseJSON = {{ course_json | safe }};
     </script>
+
+    <div class="h-container">
+        <p class="checkbox-warn-sign" style="font-size: 2rem; color: Red;">&#x26A0;</p>
+        <input class="checkbox" type="checkbox" id="allow_override_checkbox" name="llow_override_checkbox">
+        <label class="checkbox" for="allow_override_checkbox">Разрешить изменение автоматически заполненных полей</label>
+    </div>
 
     <div class="v-container">
         <details>

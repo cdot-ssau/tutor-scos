@@ -31,6 +31,7 @@ from .utils.course import (
     CourseInfo,
     get_course_key,
     get_course_info,
+    get_course_info_from_scos,
 )
 
 from .utils.user import (
@@ -161,14 +162,23 @@ def course_update(request, global_id) -> HttpResponse:
     context = CommonContext()
     try:
         scos_course = scos_get_course(global_id)
-        course_url = scos_course.get("external_url")
+        course_url = request.GET.get("course_url")
+        if course_url is None:
+            course_url = scos_course.get("external_url")
         course_key = get_course_key(course_url)
         course_info = get_course_info(course_key)
+        scos_course_info = get_course_info_from_scos(scos_course)
+        if course_info is None:
+            course_info = scos_course_info
+        else:
+            course_info.institution.value = scos_course_info.institution.value
+        course_info.business_version.value = int(scos_course_info.business_version.value) + 1
         context.update(
             {
                 "global_id": global_id,
                 "course_json": course_info.json(),
                 "course": course_info.dictionary(),
+                "scos_course": scos_course_info.dictionary(),
             }
         )
     except Exception as exception: # pylint: disable=broad-except
