@@ -31,8 +31,6 @@
             <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.title }}</a></td>
             <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.started_at }}</a></td>
             <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.institution_short_title }}</a></td>
-            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.status }}</a></td>
-            <td><a href="{% url 'scos:course' global_id=course.global_id %}">{{ course.moderation_status }}</a></td>
         </tr>
     </a>
     {% endfor %}

@@ -108,9 +108,6 @@ def course_all(request) -> HttpResponse:
                 {
                     "institution_short_title": scos_rightholders[
                         scos_course["institution_id"]]["short_title"],
-                    "moderation_status": scos_get_moderation_status(
-                        scos_course["global_id"])["status"],
-                    "status": scos_get_status(scos_course["global_id"])["status"]
                 }
             )
         context.update(
