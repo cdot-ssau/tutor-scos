@@ -15,14 +15,14 @@
     <tr>
         {% include "scos/course/components/name_and_mark_cells.html" %}
         <td>
-            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable disabled" disabled required>{{ attr.value }}</textarea>
+            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable disabled value" disabled required>{{ attr.value }}</textarea>
         </td>
     </tr>
     {% elif attr.value %}
     <tr>
         {% include "scos/course/components/name_and_mark_cells.html" %}
         <td>
-            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable disabled" disabled>{{ attr.value }}</textarea>
+            <textarea id="{{ attr.name }}" name="{{ attr.name }}" class="expandable disabled value" disabled>{{ attr.value }}</textarea>
         </td>
     </tr>
     {% else %}

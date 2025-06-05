@@ -150,7 +150,7 @@ async function openCourseByID(url) {
 // enable disabled textareas
 
 function enableDisabledTextareas(checked) {
-    const disabledTextareas = document.querySelectorAll("textarea.disabled");
+    const disabledTextareas = document.getElementsByClassName("disabled");
     for (let textarea of disabledTextareas) {
         textarea.disabled = !checked;
     }
