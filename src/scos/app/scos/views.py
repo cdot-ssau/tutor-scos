@@ -139,8 +139,7 @@ def course_add(request) -> HttpResponse:
                 context.update(
                     {
                         "course_url": course_url,
-                        "course_json": course_info.json(),
-                        "course": course_info.dictionary(),
+                        "course": course_info.dictionary_json(),
                     }
                 )
     except Exception as exception: # pylint: disable=broad-except
@@ -173,9 +172,7 @@ def course_update(request, global_id) -> HttpResponse:
         context.update(
             {
                 "global_id": global_id,
-                "course_json": course_info.json(),
-                "course": course_info.dictionary(),
-                "scos_course": scos_course_info.dictionary(),
+                "course": course_info.dictionary_json(),
             }
         )
     except Exception as exception: # pylint: disable=broad-except

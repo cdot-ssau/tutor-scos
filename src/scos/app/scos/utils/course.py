@@ -530,6 +530,13 @@ class CourseInfo:
             ensure_ascii=False
         )
 
+    def dictionary_json(self) -> Dict[str, str]:
+        course_info = self.dictionary()
+        for value in course_info.values():
+            if value['valuetype'] != "string" and value['value']:
+                value['value'] = json.dumps(value['value'], ensure_ascii=False)
+        return course_info
+
 def get_course_info_from_about(about_url: str) -> Union[dict, None]:
 
     def data_scos(tag):

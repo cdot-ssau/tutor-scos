@@ -23,12 +23,12 @@
         </div>
     </form>
 
-    {% if course_json %}
+    {% if course %}
     {% csrf_token %}
     <script>
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const courseAddSendUrl = "{% url 'scos:course_send' %}";
-        let courseJSON = {{ course_json | safe }};
+        let courseJSON = {};
     </script>
 
     <div class="h-container">
@@ -40,7 +40,7 @@
     <div class="v-container">
         <details>
             <summary class="button">Course JSON</summary>
-            <p class="json-code" id="print_course_json">{{ course_json }}</p>
+            <p class="json-code" id="print_course_json">{}</p>
         </details>
     </div>
 

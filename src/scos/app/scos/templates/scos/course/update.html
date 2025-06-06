@@ -9,13 +9,12 @@
         <a class="button" href="{% url 'scos:course_all' %}">К выбору курса</a>
         <a class="button" href="{% url 'scos:course' global_id=global_id %}">К параметрам курса</a>
     </div>
-
-    {% if course_json %}
+    {% if course %}
     {% csrf_token %}
     <script>
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const courseUpdateSendUrl = "{% url 'scos:course_send' global_id=global_id %}";
-        let courseJSON = {{ course_json | safe }};
+        let courseJSON = {};
     </script>
 
     <div class="v-container">
@@ -44,7 +43,7 @@
     <div class="v-container">
         <details>
             <summary class="button">Course JSON</summary>
-            <p class="json-code" id="print_course_json">{{ course_json }}</p>
+            <p class="json-code" id="print_course_json">{}</p>
         </details>
     </div>
 

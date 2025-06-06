@@ -44,8 +44,13 @@ function addOnChangeEvent() {
     const printCourseJSON = document.getElementById("print_course_json");
     for (let element of elementsValue) {
         element.addEventListener("change", (event) => {
+            let name = element.getAttribute("name");
             if (element.value) {
-                courseJSON[element.getAttribute("name")] = element.value;
+                try {
+                    courseJSON[name] = JSON.parse(element.value);
+                } catch (error) {
+                    courseJSON[name] = element.value;
+                }
             } else {
                 delete courseJSON[element.getAttribute("name")];
             }
@@ -61,8 +66,13 @@ function courseJSONUpdate() {
     const printCourseJSON = document.getElementById("print_course_json");
     window.addEventListener("load", (event) => {
         for (let element of elementsValue) {
+            let name = element.getAttribute("name");
             if (element.value) {
-                courseJSON[element.getAttribute("name")] = element.value;
+                try {
+                    courseJSON[name] = JSON.parse(element.value);
+                } catch (error) {
+                    courseJSON[name] = element.value;
+                }
             }
             printCourseJSON.innerHTML = formatJSONCode(courseJSON);
         }
