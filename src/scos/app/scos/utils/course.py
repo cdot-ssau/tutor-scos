@@ -254,6 +254,20 @@ class CourseInfoResults(CourseInfoAttr):
 
     value = Results()
 
+class CourseInfoHoursPerWeek(CourseInfoAttr):
+
+    class HoursPerWeek(AttrValueDescriptor):
+
+        def __set__(self, instance, value: Union[str, None]) -> None:
+            if value:
+                try:
+                    value = int(value)
+                except ValueError:
+                    return None
+            instance.__dict__[self._name] = value
+
+    value = HoursPerWeek()
+
 class CourseInfoCredits(CourseInfoAttr):
 
     class Credits(AttrValueDescriptor):
@@ -426,7 +440,7 @@ class CourseInfo:
             required = False,
             moderated = False
         )
-        self.hours_per_week = CourseInfoAttr(
+        self.hours_per_week = CourseInfoHoursPerWeek(
             name = "hours_per_week",
             valuetype = "integer",
             description = "Требуемое время для изучения онлайн-курса, часов в неделю",
