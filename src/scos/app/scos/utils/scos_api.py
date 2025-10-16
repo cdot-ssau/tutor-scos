@@ -41,6 +41,7 @@ HEADERS = {
     "Accept": "application/json",
 }
 PROXIES = {}
+TIMEOUT = (3.0, 21.0)
 
 if SCOS_HTTPS_PROXY:
     PROXIES.update({"https":SCOS_HTTPS_PROXY})
@@ -59,7 +60,7 @@ def scos_connection_check() -> str:
             headers = HEADERS_GET,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -77,7 +78,7 @@ def scos_get_platforms() -> Any:
             headers = HEADERS_GET,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -100,7 +101,7 @@ def scos_get_rightholders() -> Any:
             headers = HEADERS_GET,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -151,7 +152,7 @@ direction_id, activity_id. По умолчанию используется фи
             proxies = PROXIES,
             verify = False,
             params = params,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -174,7 +175,7 @@ def scos_get_course(global_id: str) -> Any:
             headers = HEADERS_GET,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -204,7 +205,7 @@ def scos_post_course(course_info: dict) -> Any:
             headers = HEADERS,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -235,7 +236,7 @@ def scos_put_course(course_info: dict, global_id:str) -> Any:
             headers = HEADERS,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -258,7 +259,7 @@ def scos_get_moderation_status(global_id:str) -> Any:
             headers = HEADERS_GET,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -281,7 +282,7 @@ def scos_get_status(global_id:str) -> Any:
             headers = HEADERS_GET,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -325,7 +326,7 @@ def scos_post_participation(
             headers = HEADERS,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -366,7 +367,7 @@ def scos_delete_participation(
             headers = HEADERS,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -415,7 +416,7 @@ def scos_post_subsection_grade(
             headers = HEADERS,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
@@ -458,7 +459,7 @@ def scos_post_course_grade(
             headers = HEADERS,
             proxies = PROXIES,
             verify = False,
-            timeout = (3.0, 60.0),
+            timeout = TIMEOUT,
         )
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
