@@ -54,7 +54,7 @@ def add_config_mod_to_environ(plugin: str) -> None:
     """
     Добавляем изменения конфигурации вносимые плагином в os.environ
     """
-    if plugin != entry_points(value=__name__)[0].name:
+    if plugin != getattr(next(iter(entry_points(value=__name__)), None), 'name', None):
         return
     env_var: str = os.environ.get("CONFIG_MOD")
     if env_var is None:
