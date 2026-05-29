@@ -11,12 +11,22 @@
     <a class="button" href="{% url 'scos:course_update' global_id=global_id %}">Обновить курс</a>
 </div>
 
+{% csrf_token %}
+<script>
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const courseStatusURL = new URL("{% url 'scos:course_status' %}", window.location.origin);
+    courseStatusURL.searchParams.set("global_id", "{{ global_id }}");
+</script>
+
 <div class="h-container">
-    <img src="{{ scos_course.image }}" alt="Обложка курса" width="300px" height="200px"/>
+    <img class="course-img" src="{{ scos_course.image }}" alt="Обложка курса" />
     <div class="v-container">
-        <h3>{{ scos_course.title }}</h3>
-        <p>Course status: {{ status }}</p>
-        <p>Course moderation status: {{ moderation_status }}</p>
+        <h3 style="margin-bottom: 1.5rem;">{{ scos_course.title }}</h3>
+        <p style="margin-bottom: 0.5rem;">Course status: <span id="course_status">{{ status }}</span></p>
+        <form style="height: 5rem;" id="course_status_form">
+            <input class="button" id="course_status_button" type="submit" value="Изменить статус">
+        </form>
+        <p>Course moderation status: <span id="course_moderation_status">{{ moderation_status }}</span></p>
     </div>
 </div>
 
@@ -34,4 +44,8 @@
         {% endfor %}
     </table>
 </div>
+
+{% load static %}
+<script src="{% static 'scos/js/course/course.js' %}"></script>
+
 {% endblock content %}

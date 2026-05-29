@@ -98,23 +98,24 @@ async function sendCourseInfo(url, courseJSON, csrftoken) {
     const request = new Request(url, {
         method: "POST",
         body: JSON.stringify(courseJSON),
-        headers: {'X-CSRFToken': csrftoken},
-        mode: 'same-origin'
+        headers: {"X-CSRFToken": csrftoken},
+        mode: "same-origin"
     });
     try {
         const response = await fetch(request);
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
         if (!response.ok) {
             throw new Error(`Response status: ${response.status}`);
         }
         const json = await response.json();
         window.alert(JSON.stringify(json));
-        if (response.redirected) {
-            window.location.href = response.url;
-        }
-        document.getElementById("send_course_info").disabled = false;
     } catch (error) {
             window.alert(error.message);
-            document.getElementById("send_course_info").disabled = false;
+    } finally {
+        document.getElementById("send_course_info").disabled = false;
     }
 }
 
@@ -141,11 +142,12 @@ async function openCourseByID(url) {
     });
     try {
         const response = await fetch(request);
-        if (!response.ok) {
-            throw new Error(`Response status: ${response.status}`);
-        }
         if (response.redirected) {
             window.location.href = response.url;
+            return;
+        }
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
         }
         response.text().then((value) => {
             window.alert(value);
@@ -174,6 +176,78 @@ function addAllowOverrideEvent() {
         "change",
         (event) => {
             enableDisabledTextareas(event.target.checked);
+        }
+    );
+}
+
+// reverse status
+
+function reverseStatus(statusString) {
+    let newStatusString;
+    if (statusString === "ARCHIVED") {
+        newStatus = 1;
+    } else {
+        newStatus = 0;
+    }
+    return newStatus;
+}
+
+// updating status
+
+async function updateCourseStatus(url, csrftoken) {
+    const courseStatus = document.getElementById("course_status");
+    const courseStatusButton = document.getElementById("course_status_button");
+    const putURL = new URL(url);
+    const getURL = new URL(url);
+    putURL.searchParams.set("is_active", reverseStatus(courseStatus.innerText));
+    const putRequest = new Request(putURL, {
+        method: "PUT",
+        headers: {"X-CSRFToken": csrftoken},
+        mode: "same-origin"
+    });
+    const getRequest = new Request(getURL, {
+        method: "GET",
+        mode: "same-origin"
+    });
+    courseStatusButton.disabled = true;
+    try {
+        const putResponse = await fetch(putRequest);
+        if (putResponse.redirected) {
+            window.location.href = putResponse.url;
+            return;
+        }
+        if (!putResponse.ok) {
+            throw new Error(`Response status: ${putResponse.status}`);
+        }
+        const json = await putResponse.json();
+        window.alert(JSON.stringify(json));
+    } catch (error) {
+        window.alert(error.message);
+    } finally {
+        courseStatusButton.disabled = false;
+    }
+    try {
+        const getResponse = await fetch(getRequest);
+        if (getResponse.redirected) {
+            window.location.href = getResponse.url;
+            return;
+        }
+        if (!getResponse.ok) {
+            throw new Error(`Response status: ${getResponse.status}`);
+        }
+        courseStatus.innerText = await getResponse.text();
+    } catch (error) {
+            window.alert(error.message);
+    }
+}
+
+// add event listener to course_status_button
+
+function addCourseStatusButtonEvent(url, csrftoken) {
+    document.getElementById("course_status_form").addEventListener(
+        "submit", async (event) => {
+            event.preventDefault();
+            updateCourseStatus(url, csrftoken);
         }
     );
 }

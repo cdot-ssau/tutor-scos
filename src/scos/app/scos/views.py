@@ -4,8 +4,16 @@ Views for the scos app.
 
 import logging
 import json
+from typing import Any
 
-from django.http import HttpResponse
+from django.core.exceptions import BadRequest
+from django.http import (
+    HttpResponse,
+    HttpResponseServerError,
+    JsonResponse,
+    HttpResponseBadRequest
+)
+from django.views.decorators.http import require_http_methods
 from django.shortcuts import redirect
 from django.template import loader
 from django.contrib.auth.decorators import (
@@ -24,7 +32,8 @@ from .utils.scos_api import (
     scos_post_course,
     scos_put_course,
     scos_get_moderation_status,
-    scos_get_status
+    scos_get_status,
+    scos_put_status
 )
 
 from .utils.course import (
@@ -186,17 +195,52 @@ def course_update(request, global_id) -> HttpResponse:
 
 @login_required
 @user_passes_test(is_staff_check, login_url=LMS_URL)
-def course_send(request, global_id: str = None) -> HttpResponse:
-    if request.method == "POST":
+@require_http_methods(["POST"])
+def course_send(request, global_id = None) -> JsonResponse:
+    try:
+        course_info = json.loads(request.body)
+        if global_id is None:
+            scos_response = scos_post_course(course_info)
+            return JsonResponse(scos_response)
+        scos_response = scos_put_course(course_info, global_id)
+        return JsonResponse(scos_response)
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error("СЦОС views. %s", exception)
+
+@login_required
+@user_passes_test(is_staff_check, login_url=LMS_URL)
+@require_http_methods(["GET", "PUT"])
+def course_status(request) -> Any:
+    global_id: str = request.GET.get("global_id", "")
+    if not global_id:
+        LOGGER.error("СЦОС views. Missing global_id parameter.")
+        return HttpResponseBadRequest("Missing query parameters.")
+
+    if request.method == "GET":
         try:
-            course_info = json.loads(request.body)
-            if global_id is None:
-                scos_response = scos_post_course(course_info)
-                return HttpResponse(json.dumps(scos_response))
-            scos_response = scos_put_course(course_info, global_id)
-            return HttpResponse(json.dumps(scos_response))
+            scos_response = scos_get_status(global_id)
+            if scos_response is None:
+                LOGGER.error("СЦОС views. View aborted because API call returned None.")
+                return HttpResponseServerError("External API error.")
+            return HttpResponse(scos_response, content_type="text/plain")
         except Exception as exception: # pylint: disable=broad-except
             LOGGER.error("СЦОС views. %s", exception)
+            return HttpResponseServerError("Internal server error.")
+
+    elif request.method == "PUT":
+        is_active: str = request.GET.get("is_active", "")
+        if not is_active:
+            LOGGER.error("СЦОС views. Missing is_active parameter.")
+            return HttpResponseBadRequest("Missing query parameters.")
+        try:
+            scos_response = scos_put_status(global_id, bool(int(is_active)))
+            if scos_response is None:
+                LOGGER.error("СЦОС views. View aborted because API call returned None.")
+                return HttpResponseServerError("External API error.")
+            return JsonResponse(scos_response)
+        except Exception as exception: # pylint: disable=broad-except
+            LOGGER.error("СЦОС views. %s", exception)
+            return HttpResponseServerError("Internal server error.")
 
 @login_required
 @user_passes_test(is_staff_check, login_url=LMS_URL)
@@ -209,7 +253,7 @@ def course(request, global_id) -> HttpResponse:
                 "global_id": global_id,
                 "scos_course": scos_get_course(global_id),
                 "moderation_status": scos_get_moderation_status(global_id)["status"],
-                "status": scos_get_status(global_id)["status"]
+                "status": scos_get_status(global_id)
             }
         )
     except Exception as exception: # pylint: disable=broad-except

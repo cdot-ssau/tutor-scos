@@ -1,0 +1,1 @@
+addCourseStatusButtonEvent(courseStatusURL, csrftoken);

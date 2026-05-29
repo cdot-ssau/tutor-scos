@@ -271,11 +271,39 @@ def scos_get_moderation_status(global_id:str) -> Any:
         return None
     return moderation_status
 
+def scos_put_status(global_id:str, active:bool) -> Any:
+    """
+    3.1.8. Изменение состояния онлайн-курса
+    """
+    if active:
+        status = "active"
+    else:
+        status = "archive"
+    url = f"{SCOS_BASE_URL}/api/v2/registry/courses/update_status?" + \
+        f"course_id={global_id}&status={status}"
+    try:
+        response: requests.Response = requests.put(
+            url = url,
+            headers = HEADERS,
+            proxies = PROXIES,
+            verify = False,
+            timeout = TIMEOUT,
+        )
+    except requests.exceptions.RequestException as exception:
+        LOGGER.error("СЦОС api. %s", exception)
+        return None
+    try:
+        scos_response = response.json()
+    except requests.exceptions.JSONDecodeError as exception:
+        LOGGER.error("СЦОС api. %s", exception)
+        return None
+    return scos_response
+
 def scos_get_status(global_id:str) -> Any:
     """
     3.1.9. Получение статуса онлайн-курса
     """
-    url = f"{SCOS_BASE_URL}/api/v2/registry/courses/moderation_status?course_id={global_id}"
+    url = f"{SCOS_BASE_URL}/api/v2/registry/courses/status?course_id={global_id}"
     try:
         response: requests.Response = requests.get(
             url = url,
@@ -288,8 +316,8 @@ def scos_get_status(global_id:str) -> Any:
         LOGGER.error("СЦОС api. %s", exception)
         return None
     try:
-        status = response.json()
-    except requests.exceptions.JSONDecodeError as exception:
+        status = response.text
+    except Exception as exception: # pylint: disable=broad-except
         LOGGER.error("СЦОС api. %s", exception)
         return None
     return status
