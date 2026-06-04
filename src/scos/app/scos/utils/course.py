@@ -14,6 +14,8 @@ from openedx.core.djangoapps.content.course_overviews.models import ( # pylint: 
     CourseOverview,
 )
 
+from opaque_keys.edx.keys import CourseKey
+
 from .config import (
     LMS_URL,
 )
@@ -598,7 +600,11 @@ def get_course_info_from_about(about_url: str) -> Union[dict, None]:
 def get_course_key(course_url: str) -> Union[str, None]:
     match = re.match(r"(^.*/courses/)([\w:+-]+)(/.*$|$)", course_url)
     if match:
-        return match.group(2)
+        try:
+            validated_key = CourseKey.from_string(match.group(2))
+            return str(validated_key)
+        except Exception as exception: # pylint: disable=broad-except
+            LOGGER.error("СЦОС course. %s", exception)
     return None
 
 def get_course_info_from_overview(course_key: str) -> Union[dict, None]:

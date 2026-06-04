@@ -5,13 +5,15 @@ Views for the scos app.
 import logging
 import json
 from typing import Any
+from urllib.parse import urlparse
+from functools import wraps
 
-from django.core.exceptions import BadRequest
 from django.http import (
+    JsonResponse,
     HttpResponse,
     HttpResponseServerError,
-    JsonResponse,
-    HttpResponseBadRequest
+    HttpResponseBadRequest,
+    HttpResponseNotFound,
 )
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import redirect
@@ -21,8 +23,10 @@ from django.contrib.auth.decorators import (
     user_passes_test,
 )
 from django.contrib.auth.models import User
+from django.core.cache import cache
 
 from .utils.scos_api import (
+    get_scos_course,
     scos_connection_check,
     scos_get_courses,
     scos_get_rightholders,
@@ -53,6 +57,8 @@ from .utils.config import (
     LMS_URL,
 )
 
+
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -75,7 +81,55 @@ def is_staff_check(user: User) -> bool:
     """
     return user.is_staff
 
+def check_domain(url: str) -> bool:
+    """
+    Проверка домена в адресе url на соответствие домену платформы
+    """
+    try:
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc.split(':')[0].lower()
+        parsed_lms = urlparse(LMS_URL if '://' in LMS_URL else f"https://{LMS_URL}")
+        lms_domain = parsed_lms.netloc.split(':')[0].lower()
+        return domain == lms_domain
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error(
+            "СЦОС views. %s. %s",
+            "Error processing url domain",
+            exception
+        )
+        return False
 
+def allow_cors(view_function):
+    """
+    Добавление заголовка CORS к ответу
+    """
+    @wraps(view_function)
+    def _wrapped_view(request, *args, **kwargs):
+        origin = request.headers.get("Origin", "*")
+        if origin == "*":
+            LOGGER.error("СЦОС views. Missing Origin header.")
+
+        if request.method == "OPTIONS":
+            response = JsonResponse({})
+            response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+            response["Access-Control-Allow-Headers"] = "Content-Type"
+            response["Access-Control-Allow-Origin"] = origin
+            return response
+
+        if origin != "*":
+            if not check_domain(origin):
+                LOGGER.error("СЦОС views. Unauthorized cross-origin domain: %s", origin)
+                return HttpResponseBadRequest("Unauthorized cross-origin domain")
+
+        try:
+            response = view_function(request, *args, **kwargs)
+        except Exception as exception: # pylint: disable=broad-except
+            LOGGER.error("СЦОС views. %s", exception)
+            response = HttpResponseServerError("Internal server error.")
+
+        response["Access-Control-Allow-Origin"] = origin
+        return response
+    return _wrapped_view
 
 @login_required
 @user_passes_test(is_staff_check, login_url=LMS_URL)
@@ -241,6 +295,56 @@ def course_status(request) -> Any:
         except Exception as exception: # pylint: disable=broad-except
             LOGGER.error("СЦОС views. %s", exception)
             return HttpResponseServerError("Internal server error.")
+
+@require_http_methods(["GET", "OPTIONS"])
+@allow_cors
+def course_check(request) -> JsonResponse:
+    course_url = request.GET.get("course_url", "")
+    if not course_url:
+        LOGGER.error("СЦОС views. СЦОС widget view. Missing course_url parameter.")
+        return HttpResponseBadRequest("Missing query parameters")
+
+    if not check_domain(course_url):
+        LOGGER.error("СЦОС views. СЦОС widget view. Parameter domain mismatch.")
+        return HttpResponseBadRequest("Parameter domain mismatch")
+
+    course_key = get_course_key(course_url)
+    if not course_key:
+        LOGGER.error("СЦОС views. СЦОС widget view. No valid course key in url.")
+        return HttpResponseServerError("Internal server error")
+
+    cache_key = f"scos_widget_data_{course_key}"
+    cached_api_response = cache.get(cache_key)
+
+    try:
+        if cached_api_response:
+            api_response = cached_api_response
+        else:
+            scos_course = get_scos_course(course_key)
+            api_response = {
+                "has_data": scos_course is not None,
+                "data": scos_course
+            }
+            cache.set(cache_key, api_response, timeout=300)
+        if api_response["has_data"]:
+            if SCOS_BASE_URL == "https://test.online.edu.ru":
+                widget_url = "https://test.online.edu.ru"
+            else:
+                widget_url = "https://online.edu.ru"
+            return JsonResponse(
+                {
+                    "scos": {
+                        "widget_url": widget_url,
+                        "course_id": api_response["data"]["global_id"],
+                        "course_version": api_response["data"]["business_version"],
+                    }
+                }
+            )
+        else:
+            return HttpResponseNotFound("Course not found on SCOS")
+    except Exception as exception: # pylint: disable=broad-except
+        LOGGER.error("СЦОС views. SCOS widget view. %s", exception)
+        return HttpResponseServerError("Internal server error")
 
 @login_required
 @user_passes_test(is_staff_check, login_url=LMS_URL)
