@@ -15,8 +15,14 @@ with codecs.open(CONFIG_FILE, encoding="utf-8") as f:
 
 SETTINGS = import_module(os.environ["DJANGO_SETTINGS_MODULE"])
 LMS_BASE_URL = SETTINGS.LMS_BASE
+CMS_BASE_URL = SETTINGS.CMS_BASE
 
 if SCOS_ENABLE_HTTPS == "False":
     LMS_URL = f"http://{LMS_BASE_URL}"
 else:
     LMS_URL = f"https://{LMS_BASE_URL}"
+
+if SCOS_ENABLE_HTTPS == "False":
+    CMS_URL = f"http://{CMS_BASE_URL}"
+else:
+    CMS_URL = f"https://{CMS_BASE_URL}"
