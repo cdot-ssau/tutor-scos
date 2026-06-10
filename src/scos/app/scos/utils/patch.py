@@ -71,33 +71,6 @@ INSTALLED_APPS.append('cms.djangoapps.scos')
         </script>
 """,
     },
-    {
-        "file": "/openedx/edx-platform/lms/djangoapps/courseware/views/views.py",
-        "search_text": "course_about_template = 'courseware/course_about.html'",
-        "replace_text": "course_about_template = 'courseware/course_about.html'" + \
-"""
-        from cms.djangoapps.scos.utils.scos_api import get_scos_course
-        from cms.djangoapps.scos.utils.config import SCOS_BASE_URL
-        try:
-            scos_course = get_scos_course(course_key)
-            if scos_course:
-                if SCOS_BASE_URL == "https://test.online.edu.ru":
-                    widget_url = "https://test.online.edu.ru"
-                else:
-                    widget_url = "https://online.edu.ru"
-                context.update(
-                    {
-                        "scos": {
-                            "widget_url": widget_url,
-                            "course_id": scos_course["global_id"],
-                            "course_version": scos_course["business_version"],
-                        }
-                    }
-                )
-        except Exception as exception:
-            LOGGER.error("СЦОС courseware views. %s", exception)
-"""
-    }
 ]
 
 
