@@ -257,7 +257,9 @@ def course_send(request, global_id = None) -> JsonResponse:
             scos_response = scos_post_course(course_info)
             return JsonResponse(scos_response)
         scos_response = scos_put_course(course_info, global_id)
-        return JsonResponse(scos_response)
+        if scos_response is not None:
+            return JsonResponse(scos_response)
+        return JsonResponse({"SCOS api": "request exception"})
     except Exception as exception: # pylint: disable=broad-except
         LOGGER.error("СЦОС views. %s", exception)
 

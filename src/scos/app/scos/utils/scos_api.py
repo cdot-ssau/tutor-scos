@@ -238,15 +238,16 @@ def scos_put_course(course_info: dict, global_id:str) -> Any:
             verify = False,
             timeout = TIMEOUT,
         )
+        try:
+            scos_json_response = response.json()
+        except requests.exceptions.JSONDecodeError:
+            return {"SCOS api": {"response status code": response.status_code}}
+        return scos_json_response
     except requests.exceptions.RequestException as exception:
         LOGGER.error("СЦОС api. %s", exception)
         return None
-    try:
-        scos_response = response.json()
-    except requests.exceptions.JSONDecodeError as exception:
-        LOGGER.error("СЦОС api. %s", exception)
-        return None
-    return scos_response
+
+
 
 def scos_get_moderation_status(global_id:str) -> Any:
     """
