@@ -10,7 +10,7 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from openedx.core.djangoapps.content.course_overviews.models import ( # pylint: disable=import-error
+from openedx.core.djangoapps.content.course_overviews.models import (          # pylint: disable=import-error
     CourseOverview,
 )
 

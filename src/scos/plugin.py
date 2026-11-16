@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import os
 import os.path
-import shutil
-from glob import glob
+import textwrap
+from importlib.resources import files
 from typing import Union
-from importlib.metadata import entry_points
-
 import appdirs
-import pkg_resources
-from tutor import hooks, fmt, serialize
+from tutor import hooks, fmt
 from tutor import config as tutor_config
 from tutor.types import Config
 from tutor.__about__ import __app__
+from tutormfe.hooks import EXTERNAL_SCRIPTS
 from .__about__ import __version__
 
 
@@ -20,11 +18,6 @@ from .__about__ import __version__
 ROOT_PATH: str = (os.path.expanduser(os.environ.get("TUTOR_ROOT", ""))
     or appdirs.user_data_dir(__app__)
 )
-SCOS_BUILD: str = pkg_resources.resource_filename("scos", "app")
-SCOS_TEMPLATES: str = pkg_resources.resource_filename("scos", "templates")
-SCOS_PATCHES: str = pkg_resources.resource_filename("scos", "patches")
-
-
 
 hooks.Filters.CONFIG_DEFAULTS.add_items(
     [
@@ -32,68 +25,12 @@ hooks.Filters.CONFIG_DEFAULTS.add_items(
     ]
 )
 
+RESOURCES = files("scos")
 
-
-# Копируем Django приложение и дополнительные модули СЦОС в папку с Dockerfile openedX
-shutil.copytree(
-    os.path.join(SCOS_BUILD, "scos"),
-    os.path.join(ROOT_PATH, "env/build/openedx/scos"),
-    dirs_exist_ok=True
+SCOS_LOADERS = (
+    (RESOURCES / "scos_loaders.js")
+    .read_text(encoding="utf-8")
 )
-
-
-
-CONFIG_MOD: dict = {
-        "OPENEDX_EXTRA_PIP_REQUIREMENTS": [
-            "python-jose>=3.0.0",
-        ],
-}
-
-@hooks.Actions.PLUGIN_LOADED.add()
-def add_config_mod_to_environ(plugin: str) -> None:
-    """
-    Добавляем изменения конфигурации вносимые плагином в os.environ
-    """
-    if plugin != getattr(next(iter(entry_points(value=__name__)), None), 'name', None):
-        return
-    env_var: str = os.environ.get("CONFIG_MOD")
-    if env_var is None:
-        os.environ.update({"CONFIG_MOD": str(CONFIG_MOD)})
-    else:
-        env_mod: dict = serialize.parse(env_var)
-        for key, value in CONFIG_MOD.items():
-            if not key in env_mod:
-                env_mod.update({key: value})
-            else:
-                if env_mod[key] != value:
-                    env_mod[key] += [
-                        e for e in value if e not in env_mod[key]
-                    ]
-        os.environ.update({"CONFIG_MOD": str(env_mod)})
-
-@hooks.Actions.PLUGINS_LOADED.add()
-def write_changes_to_config():
-    """
-    Добавляем изменения конфигурации из os.environ в config 
-    """
-    config: Config = tutor_config.load_minimal(ROOT_PATH)
-    env_var: str = os.environ.get("CONFIG_MOD")
-    if env_var is None:
-        return
-    env_mod: dict = serialize.parse(env_var)
-    config_mod: bool = False
-    for key, value in env_mod.items():
-        if not key in config:
-            config.update({key: value})
-            config_mod = True
-        else:
-            if not set(value) <= set(config[key]):
-                config[key] += [
-                    e for e in value if e not in config[key]
-                ]
-                config_mod = True
-    if config_mod:
-        tutor_config.save_config_file(ROOT_PATH, config)
 
 
 
@@ -170,10 +107,39 @@ hooks.Filters.ENV_PATCHES.add_items(
     ]
 )
 
+hooks.Filters.ENV_PATCHES.add_items([
+    (
+        "lms-env", textwrap.dedent("""
+            THIRD_PARTY_AUTH_BACKENDS: [
+                "social_core.backends.google.GoogleOAuth2",
+                "cms.djangoapps.scos.utils.auth.SCOSAuthBackend"
+            ]
+        """).strip()
+    ),
+    (
+        "lms-env-features", textwrap.dedent("""
+            ENABLE_THIRD_PARTY_AUTH: true
+        """).strip()
+    ),
+    (
+        "openedx-dockerfile-post-python-requirements", textwrap.dedent("""
+            RUN $PIP_COMMAND install git+https://github.com/cdot-ssau/tutor-scos
+        """).strip()
+    ),
+    (
+        "mfe-lms-common-settings", textwrap.dedent("""
+            MFE_CONFIG["CMS_BASE_URL"] = CMS_ROOT_URL
+            FRONTEND_SITE_CONFIG["commonAppConfig"]["CMS_BASE_URL"] = CMS_ROOT_URL
+        """).strip()
+    ),
+    (
+        "mfe-env-config-buildtime-definitions", SCOS_LOADERS
+    ),
+    (
+        "mfe-site-custom-app-definitions", SCOS_LOADERS
+    ),
+])
 
-
-for path in glob(os.path.join(SCOS_PATCHES, "*")):
-    with open(path, encoding="utf-8") as patch_file:
-        hooks.Filters.ENV_PATCHES.add_item(
-            (os.path.basename(path), patch_file.read())
-        )
+EXTERNAL_SCRIPTS.add_items([
+    ("catalog", "SCOSCatalogLoader"),
+])

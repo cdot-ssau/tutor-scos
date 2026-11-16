@@ -1,0 +1,29 @@
+def plugin_settings(settings):
+    settings.EVENT_TRACKING_BACKENDS.update(
+        {
+            "scos": {
+                "ENGINE": "eventtracking.backends.routing.RoutingBackend",
+                "OPTIONS": {
+                    "backends": {
+                        "scos": {
+                            "ENGINE": "scos.utils.events.SCOSEventTrackingBackend",
+                        }
+                    },
+                    "processors": [
+                        {
+                            "ENGINE": "eventtracking.processors.regex_filter.RegexFilter",
+                            "OPTIONS": {
+                                "filter_type": "allowlist",
+                                "regular_expressions": [
+                                    "edx.course.enrollment.activated",
+                                    "edx.course.enrollment.deactivated",
+                                    "edx.grades.subsection.grade_calculated",
+                                    "edx.grades.course.grade_calculated",
+                                ],
+                            },
+                        }
+                    ],
+                },
+            }
+        }
+    )

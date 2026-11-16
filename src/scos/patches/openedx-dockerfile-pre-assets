@@ -1,3 +1,0 @@
-COPY --chown=app:app ./scos ./cms/djangoapps/scos
-
-RUN python3 ./cms/djangoapps/scos/utils/patch.py

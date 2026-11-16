@@ -4,7 +4,7 @@
 
 import logging
 
-from common.djangoapps.track.backends import BaseBackend # pylint: disable=import-error
+from common.djangoapps.track.backends import BaseBackend                       # pylint: disable=import-error
 
 from .tasks import (
     user_enrolled,
