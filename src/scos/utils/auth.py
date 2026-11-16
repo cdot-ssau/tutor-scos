@@ -2,18 +2,17 @@
 СЦОС OpenId backend
 """
 
-from requests import request
-
+from requests import RequestException, request
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 from social_core.backends.open_id_connect import OpenIdConnectAuth
-from social_core.utils import (SSLHttpAdapter, user_agent)
 from social_core.exceptions import AuthFailed
+from social_core.utils import user_agent
 
-from .config import (
-    SCOS_OIDC_ENDPOINT,
+from scos.utils.config import (
     SCOS_HTTPS_PROXY,
+    SCOS_OIDC_ENDPOINT,
 )
 
 disable_warnings(InsecureRequestWarning)
@@ -21,7 +20,7 @@ disable_warnings(InsecureRequestWarning)
 PROXIES = {}
 
 if SCOS_HTTPS_PROXY:
-    PROXIES.update({"https":SCOS_HTTPS_PROXY})
+    PROXIES.update({"https": SCOS_HTTPS_PROXY})
 
 
 
@@ -55,8 +54,6 @@ class SCOSAuthBackend(OpenIdConnectAuth):
             "last_name": last_name,
         }
 
-# redefining BaseAuth.request
-
     def request(self, url, method="GET", *args, **kwargs):
         kwargs.setdefault("headers", {})
         if self.setting("PROXIES") is not None:
@@ -64,6 +61,7 @@ class SCOSAuthBackend(OpenIdConnectAuth):
 
         if self.setting("VERIFY_SSL") is not None:
             kwargs.setdefault("verify", self.setting("VERIFY_SSL"))
+
         kwargs.setdefault(
             "timeout",
             self.setting("REQUESTS_TIMEOUT") or self.setting("URLOPEN_TIMEOUT"),
@@ -72,12 +70,16 @@ class SCOSAuthBackend(OpenIdConnectAuth):
             kwargs["headers"]["User-Agent"] = self.setting("USER_AGENT") or user_agent()
 
         try:
-            if self.SSL_PROTOCOL:
-                session = SSLHttpAdapter.ssl_adapter_session(self.SSL_PROTOCOL)
-                response = session.request(method, url, *args, **kwargs)
-            else:
-                response = request(method, url, *args, proxies = PROXIES, verify = False, **kwargs)
-        except ConnectionError as err:
-            raise AuthFailed(self, str(err))
+            response = request(
+                method,
+                url,
+                *args,
+                proxies=PROXIES,
+                verify=False,
+                **kwargs,
+            )
+        except RequestException as err:
+            raise AuthFailed(self, str(err)) from err
+
         response.raise_for_status()
         return response

@@ -4,7 +4,7 @@ URLs for the scos app.
 
 from django.urls import path
 
-from .views import (
+from scos.views import (
     scos,
     course_all,
     course,
@@ -18,7 +18,7 @@ from .views import (
     user_course
 )
 
-app_name = 'cms.djangoapps.scos'
+app_name = 'scos'
 
 urlpatterns = [
     path("", scos, name="scos"),

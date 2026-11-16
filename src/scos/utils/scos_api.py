@@ -16,11 +16,11 @@ import requests
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 
-from .course import (
+from scos.utils.course import (
     get_course_info_from_overview,
 )
 
-from .config import (
+from scos.utils.config import (
     SCOS_BASE_URL,
     SCOS_X_CN_UUID,
     SCOS_PARTNER_ID,

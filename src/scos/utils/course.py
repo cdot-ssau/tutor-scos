@@ -10,13 +10,13 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from openedx.core.djangoapps.content.course_overviews.models import ( # pylint: disable=import-error
+from openedx.core.djangoapps.content.course_overviews.models import (          # pylint: disable=import-error
     CourseOverview,
 )
 
 from opaque_keys.edx.keys import CourseKey
 
-from .config import (
+from scos.utils.config import (
     LMS_URL,
 )
 

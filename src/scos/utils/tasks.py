@@ -6,7 +6,7 @@ from opaque_keys.edx.keys import UsageKey
 
 from lms.djangoapps.course_api.blocks.api import get_blocks # pylint: disable=import-error
 
-from .scos_api import (
+from scos.utils.scos_api import (
     scos_post_participation,
     scos_delete_participation,
     scos_post_subsection_grade,
@@ -14,7 +14,7 @@ from .scos_api import (
     get_scos_course,
 )
 
-from .user import (
+from scos.utils.user import (
     get_user_scos_uid,
 )
 

@@ -25,7 +25,7 @@ from django.contrib.auth.decorators import (
 from django.contrib.auth.models import User
 from django.core.cache import cache
 
-from .utils.scos_api import (
+from scos.utils.scos_api import (
     get_scos_course,
     scos_connection_check,
     scos_get_courses,
@@ -40,18 +40,18 @@ from .utils.scos_api import (
     scos_put_status
 )
 
-from .utils.course import (
+from scos.utils.course import (
     CourseInfo,
     get_course_key,
     get_course_info,
     get_course_info_from_scos,
 )
 
-from .utils.user import (
+from scos.utils.user import (
     get_course_enrollments,
 )
 
-from .utils.config import (
+from scos.utils.config import (
     SCOS_BASE_URL,
     SCOS_PARTNER_ID,
     LMS_URL,

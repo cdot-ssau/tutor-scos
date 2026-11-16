@@ -1,3 +1,4 @@
-recursive-include src/scos/patches *
+recursive-include src/scos/settings *
+recursive-include src/scos/static *
 recursive-include src/scos/templates *
-recursive-include src/scos/app *
+recursive-include src/scos/utils *
